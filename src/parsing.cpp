@@ -144,3 +144,72 @@ std::optional<std::int64_t> timeToNano(std::string_view originalTime) {
 
     return time;
 }
+
+
+std::optional<LobsterEvent> parseLobsterEvent(const std::array<std::string_view,fieldCount>& order) {
+    LobsterEvent event{};
+
+    // loading time
+
+    std::string_view lobsterTime{order[0]};
+    std::optional<std::int64_t> time{timeToNano(lobsterTime)};
+    if (!time) return std::nullopt;
+    event.timestamp = *time;
+
+    // loading type
+
+    std::optional<std::int64_t> type{parseInt(order[1])};
+    if (!type.has_value()) return std::nullopt;
+    switch (*type) {
+        case 1:
+            event.type = LobsterType::NewOrder;
+            break;
+        case 2:
+            event.type = LobsterType::PartialCancel;
+            break;
+        case 3:
+            event.type = LobsterType::Delete;
+            break;
+        case 4:
+            event.type = LobsterType::Execution;
+            break;
+        case 5:
+            event.type = LobsterType::HiddenExecution;
+            break;
+        case 6:
+            event.type = LobsterType::CrossTrade;
+            break;
+        case 7:
+            event.type = LobsterType::Halt;
+            break;
+        default:
+            return std::nullopt;
+    }
+
+    // Loading order ID
+    std::optional<std::int64_t> orderId{parseInt(order[2])};
+    if (!orderId.has_value()) return std::nullopt;
+    event.orderId = *orderId;
+
+    // Loading quantity
+    std::optional<std::int64_t> size{parseInt(order[3])};
+    if (!size.has_value()) return std::nullopt;
+    event.quantity = *size;
+
+    // loading price
+    std::optional<std::int64_t> price{parseInt(order[4])};
+    if (!price.has_value()) return std::nullopt;
+    if (*price % 100 == 0 ) event.price = *price/100;
+    else return std::nullopt;
+
+    // loading side
+    std::optional<std::int64_t> side{parseInt(order[5])};
+    if (!side.has_value()) return std::nullopt;
+    switch (*side) {
+        case 1 : event.side = Side::Buy; break;
+        case -1 : event.side = Side::Sell; break;
+        default: return std::nullopt;
+    }
+
+    return event;
+}

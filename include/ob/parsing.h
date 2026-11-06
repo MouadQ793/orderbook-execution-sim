@@ -19,3 +19,4 @@ std::string_view toString(OrderType type);
 std::string_view toString(Side side);
 void printOrder(const OrderEvent& event);
 std::optional<std::int64_t> timeToNano(std::string_view originalTime);
+std::optional<LobsterEvent> parseLobsterEvent(const std::array<std::string_view,fieldCount>& order);

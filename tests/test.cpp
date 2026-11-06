@@ -135,6 +135,35 @@ TEST(timeToNano, RejectsNonNumericFraction) {
 
 }
 
+// Checking Lobster Parser
+
+TEST(parseLobsterEvent, ParsesNewOrder) {
+    const std::array<std::string_view, fieldCount> fields{splitOrder("34200.01399412,1,16116348,100,310500,-1")};
+    std::optional<LobsterEvent> event{parseLobsterEvent(fields)};
+
+    ASSERT_TRUE(event.has_value());
+    EXPECT_EQ(event->timestamp, 13'994'120);
+    EXPECT_EQ(event->type, LobsterType::NewOrder);
+    EXPECT_EQ(event->orderId, 16116348);
+    EXPECT_EQ(event->side, Side::Sell);
+    EXPECT_EQ(event->price, 3105);
+    EXPECT_EQ(event->quantity, 100);
+}
+
+TEST(parseLobsterEvent, RejectsUnkownType) {
+    const std::array<std::string_view, fieldCount> fields{splitOrder("34200.0,8,1,100,310500,1")};
+    std::optional<LobsterEvent> event{parseLobsterEvent(fields)};
+    ASSERT_FALSE(event.has_value());
+}
+
+TEST(parseLobsterEvent, RejectsSubTickPrice	) {
+    const std::array<std::string_view, fieldCount> fields{splitOrder("34200.0,1,1,100,310550,1")};
+    std::optional<LobsterEvent> event{parseLobsterEvent(fields)};
+    ASSERT_FALSE(event.has_value());
+}
+
+
+
 
 
 
