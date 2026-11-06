@@ -1,29 +1,39 @@
 #include "ob/parsing.h"
-
+#include <unordered_map>
 #include <iostream>
 #include <fstream>
 #include <string>
 
 int main() {
+
     std::ifstream testBook{};
-    testBook.open("Data/test_small.csv"); // explicitely opening book
+    testBook.open("Data/MSFT_2012-06-21_34200000_57600000_message_10.csv"); // explicitely opening book
 
     if (!testBook) {
         std::cerr << "Couldn't read the book, check Path " << std::endl;
+        return 1;
     }
 
     std::string orderInput{};
-    std::getline(testBook, orderInput);
+    QuantityMap qtyTracker{};
 
     while (std::getline(testBook, orderInput)){
         // reads the events
         std::array<std::string_view, fieldCount> fields{splitOrder(orderInput)};
 
-        // Turn the 6 fields into an orderevent element
-        std::optional<OrderEvent> event{fitOrderEvent(fields)};
+        // parse
+        std::optional<LobsterEvent> lobsterEvent{parseLobsterEvent(fields)};
+        if (!lobsterEvent) {
+            std::cerr << "Invalid line: " << orderInput << '\n';
+            continue;   // skip to the next line
+        }
 
-        // Printing the order event
-        printOrder(*event);
+        std::optional<OrderEvent> order{translateLobsterEvent(qtyTracker,*lobsterEvent)};
+        if (!order) {
+            std::cerr << "Invalid line: " << orderInput << '\n';
+            continue;   // skip to the next line
+        }
+        printOrder(*order);
     }
     return 0;
 }

@@ -3,6 +3,8 @@
 #include <charconv>
 #include <optional>
 #include <system_error>
+#include <unordered_map>
+
 #include "ob/utils.h"
 
 std::array<std::string_view, fieldCount> splitOrder(std::string_view line) {
@@ -212,4 +214,54 @@ std::optional<LobsterEvent> parseLobsterEvent(const std::array<std::string_view,
     }
 
     return event;
+}
+
+
+std::optional<OrderEvent> translateLobsterEvent(std::unordered_map<std::int64_t, std::int64_t>& qtyTracker,const LobsterEvent& lobsterEvent) {
+    OrderEvent orderEvent{};
+    // These traits don't depend on type of order
+    orderEvent.timestamp = lobsterEvent.timestamp;
+    orderEvent.orderId = lobsterEvent.orderId;
+
+
+    // if the order isn't a new one and there is no history of it, skip
+    if (lobsterEvent.type != LobsterType::NewOrder && !qtyTracker.contains(lobsterEvent.orderId)) {
+        return std::nullopt;
+    }
+    switch (lobsterEvent.type) {
+        case LobsterType::NewOrder: {
+            qtyTracker[lobsterEvent.orderId] = lobsterEvent.quantity;
+            orderEvent.type = OrderType::Add ;
+            orderEvent.side = lobsterEvent.side;
+            orderEvent.price = lobsterEvent.price;
+            orderEvent.quantity = lobsterEvent.quantity;
+            break;
+        }
+        case LobsterType::Delete: qtyTracker.erase(lobsterEvent.orderId); orderEvent.type = OrderType::Cancel ; break;
+        case LobsterType::PartialCancel:
+        case LobsterType::Execution: {
+            // computing remained once as const bcs of bug in Modify that would recreate the map in case of 0
+            // If remainder in order >0 keep else delete from tracker, regardless put in translated event
+            const std::int64_t remaining{qtyTracker[lobsterEvent.orderId] - lobsterEvent.quantity};
+            if (remaining > 0)
+                qtyTracker[lobsterEvent.orderId] = remaining;
+            else qtyTracker.erase(lobsterEvent.orderId);
+
+            if (lobsterEvent.type == LobsterType::PartialCancel) {
+                orderEvent.type = OrderType::Modify;
+                orderEvent.quantity = remaining;
+            }
+            if (lobsterEvent.type == LobsterType::Execution) {
+                orderEvent.type = OrderType::Execute;
+                orderEvent.quantity = lobsterEvent.quantity;
+            }
+            break;
+        }
+        case LobsterType::CrossTrade:;
+        case LobsterType::Halt:;
+        case LobsterType::HiddenExecution:;
+        default: return std::nullopt;
+    }
+
+    return orderEvent;
 }
