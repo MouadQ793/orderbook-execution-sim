@@ -16,11 +16,14 @@ int main() {
     std::getline(testBook, orderInput);
 
     while (std::getline(testBook, orderInput)){
+        // reads the events
         std::array<std::string_view, fieldCount> fields{splitOrder(orderInput)};
 
-        // Step 2: turn the fields into an OrderEvent (or nothing, if the line is invalid)
+        // Turn the 6 fields into an orderevent element
         std::optional<OrderEvent> event{fitOrderEvent(fields)};
 
+        // Printing the order event
+        printOrder(*event);
     }
     return 0;
 }

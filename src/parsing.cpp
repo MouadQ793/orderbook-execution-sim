@@ -21,14 +21,6 @@ std::array<std::string_view, fieldCount> splitOrder(std::string_view line) {
     return result;
 }
 
-void printArray(const std::array<std::string_view, fieldCount>& order) {
-    for (std::size_t i {0}; i < order.size() ; ++i) {
-        if ( i> 0 ) std::cout << " | ";
-        std::cout << order[i];
-    }
-    std::cout << "\n";
-
-}
 // helper function to grab the numbers using pointers of location
 namespace {
     std::optional<std::int64_t> parseInt(std::string_view field) {
@@ -97,4 +89,31 @@ std::optional<OrderEvent> fitOrderEvent(const std::array<std::string_view, field
     }
 
     return event;
+}
+
+std::string_view toString(OrderType type) {
+    switch (type) {
+        case OrderType::Add:     return "ADD";
+        case OrderType::Cancel:  return "CANCEL";
+        case OrderType::Execute: return "EXECUTE";
+        case OrderType::Modify:  return "MODIFY";
+        default:                 return "NONE";
+    }
+}
+
+std::string_view toString(Side side) {
+    switch (side) {
+        case Side::Buy: return "BUY";
+        case Side::Sell: return "SELL";
+        default: return "NONE";
+    }
+}
+
+void printOrder(const OrderEvent& event) {
+    std::cout << event.timestamp << '|';
+    std::cout << toString(event.type) << '|';
+    std::cout << event.orderId << '|';
+    std::cout << toString(event.side) << '|';
+    std::cout << event.price << '|';
+    std::cout << event.quantity << '\n';
 }
