@@ -3,8 +3,7 @@
 #include <charconv>
 #include <optional>
 #include <system_error>
-
-
+#include "ob/utils.h"
 
 std::array<std::string_view, fieldCount> splitOrder(std::string_view line) {
 
@@ -20,6 +19,7 @@ std::array<std::string_view, fieldCount> splitOrder(std::string_view line) {
 
     return result;
 }
+
 
 // helper function to grab the numbers using pointers of location
 namespace {
@@ -116,4 +116,31 @@ void printOrder(const OrderEvent& event) {
     std::cout << toString(event.side) << '|';
     std::cout << event.price << '|';
     std::cout << event.quantity << '\n';
+}
+
+std::optional<std::int64_t> timeToNano(std::string_view originalTime) {
+    // Finding the position where we split
+    std::size_t position{originalTime.find('.',0)};
+    std::int64_t time{0},base{0};
+
+    // we extract the time in seconds before "." and check if it's valid or not because of a wrong input.
+    std::optional<std::int64_t> seconds{parseInt(originalTime.substr(0,position))};
+    if (!seconds.has_value() ) return std::nullopt;
+    // if time is valid and  there is no dot return just base
+    base = (*seconds - openSeconds) * nsPerSecond;
+    if (position == std::string_view::npos) return base;
+
+    // if there is a dot
+    // we check if the parsing is valid and not typo
+    // then if there are indeed 9 numbers for nano convention
+    std::size_t checkNano{(originalTime.substr(position + 1 ,originalTime.size() - position )).size()};
+    std::optional<std::int64_t> nanos{parseInt(originalTime.substr(position + 1,originalTime.size() - position ))};
+    if (!nanos.has_value()) return std::nullopt;
+
+    // if it's fine compute the power missing for nanos, add both and return time
+    const int power{9 - static_cast<int>(checkNano)};
+    if (checkNano <9) *nanos = *nanos * powint(10, power);
+    time = base + *nanos;
+
+    return time;
 }

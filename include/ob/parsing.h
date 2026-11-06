@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ob/message.h"
+#include "ob/utils.h"
 #include <string_view>
 #include <array>
 #include <cstddef>
@@ -17,3 +18,4 @@ std::optional<OrderEvent> fitOrderEvent(const std::array<std::string_view, field
 std::string_view toString(OrderType type);
 std::string_view toString(Side side);
 void printOrder(const OrderEvent& event);
+std::optional<std::int64_t> timeToNano(std::string_view originalTime);

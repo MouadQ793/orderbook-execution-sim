@@ -3,7 +3,7 @@
 #include "ob/parsing.h"
 
 
-
+// Fitting order events
 TEST(FitOrderEvent, ParsesValidAdd) {
     // to check if parsing a valid addition order works as intended, giving a valid input, using the function and checking if the output is valid
     std::array<std::string_view, fieldCount> fields{splitOrder("0,A,1,B,100,50")};
@@ -92,4 +92,63 @@ TEST(FitOrderEvent, AddNoSide) {
     // Checking
     ASSERT_FALSE(event.has_value());
 }
+
+// Checking time converters
+
+TEST(timeToNano, paddingRequired) {
+    std::string_view lobsterTime{"34200.01399412"};
+    const std::optional<std::int64_t> time{timeToNano(lobsterTime)};
+
+    ASSERT_TRUE(time.has_value());
+    EXPECT_EQ(*time, 13994120);
+}
+
+TEST(timeToNano, NineDigits) {
+    std::string_view lobsterTime{"34200.015247805"};
+    const std::optional<std::int64_t> time{timeToNano(lobsterTime)};
+
+    ASSERT_TRUE(time.has_value());
+    EXPECT_EQ(*time, 15247805);
+}
+
+TEST(timeToNano, OneDigitOneSecondAfterOpen) {
+    std::string_view lobsterTime{"34201.5"};
+    const std::optional<std::int64_t> time{timeToNano(lobsterTime)};
+
+    ASSERT_TRUE(time.has_value());
+    EXPECT_EQ(*time, 1'500'000'000);
+}
+
+TEST(timeToNano, NoDot) {
+    std::string_view lobsterTime{"34200"};
+    const std::optional<std::int64_t> time{timeToNano(lobsterTime)};
+
+    ASSERT_TRUE(time.has_value());
+    EXPECT_EQ(*time, 0);
+}
+
+TEST(timeToNano, RejectsNonNumericFraction) {
+    std::string_view lobsterTime{"34200.abc"};
+    const std::optional<std::int64_t> time{timeToNano(lobsterTime)};
+
+    ASSERT_FALSE(time.has_value());
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
