@@ -1,4 +1,4 @@
-#include "ob/csv.h"
+#include "ob/parsing.h"
 
 #include <iostream>
 #include <fstream>
@@ -14,8 +14,13 @@ int main() {
 
     std::string orderInput{};
     std::getline(testBook, orderInput);
+
     while (std::getline(testBook, orderInput)){
-        printArray(splitOrder(orderInput));
+        std::array<std::string_view, fieldCount> fields{splitOrder(orderInput)};
+
+        // Step 2: turn the fields into an OrderEvent (or nothing, if the line is invalid)
+        std::optional<OrderEvent> event{fitOrderEvent(fields)};
+
     }
     return 0;
 }

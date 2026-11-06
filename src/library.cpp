@@ -1,10 +1,3 @@
-
-
-#include <iostream>
-
-int main() {
-
-    std::cout << " Hello World !" << std::endl;
-
-
-}
+//
+// Created by mouad-sehli on 11/5/26.
+//

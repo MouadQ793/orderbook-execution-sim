@@ -2,6 +2,6 @@ cmake-build-*/
 build/
 .idea/
 Data/*
-!data/test_small*
+!Data/test_small*
 __pycache__/
 .ipynb_checkpoints/

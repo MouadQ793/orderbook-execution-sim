@@ -15,7 +15,7 @@ FetchContent_MakeAvailable(googletest)
 add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror)
 
 add_library(projet_lib src/library.cpp
-        src/csv.cpp)
+        src/parsing.cpp)
 target_include_directories(projet_lib PUBLIC include)
 
 add_executable(projet main.cpp)
