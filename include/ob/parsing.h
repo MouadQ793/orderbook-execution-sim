@@ -22,3 +22,6 @@ void printOrder(const OrderEvent& event);
 std::optional<std::int64_t> timeToNano(std::string_view originalTime);
 std::optional<LobsterEvent> parseLobsterEvent(const std::array<std::string_view,fieldCount>& order);
 std::optional<OrderEvent> translateLobsterEvent(QuantityMap& qtyTracker, const LobsterEvent& lobsterEvent);
+std::string toCsvLine(const OrderEvent& event);
+char toChar(OrderType type);
+char toChar(Side side);

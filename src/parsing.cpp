@@ -4,7 +4,8 @@
 #include <optional>
 #include <system_error>
 #include <unordered_map>
-
+#include <sstream>
+#include <cassert>
 #include "ob/utils.h"
 
 std::array<std::string_view, fieldCount> splitOrder(std::string_view line) {
@@ -264,4 +265,53 @@ std::optional<OrderEvent> translateLobsterEvent(std::unordered_map<std::int64_t,
     }
 
     return orderEvent;
+}
+
+// helper  to char functions so I can parse type/side in toCsvLine string
+
+char toChar(OrderType type) {
+    switch (type) {
+        case OrderType::Add:
+            return 'A';
+        case OrderType::Modify:
+            return 'M';
+        case OrderType::Cancel:
+            return 'C';
+        case OrderType::Execute:
+            return 'E';
+        default:
+            return '?';
+    }
+}
+
+char toChar(Side side) {
+    switch (side) {
+        case Side::Buy:
+            return 'B';
+        case Side::Sell:
+            return 'S';
+        default:
+            return '?';
+    }
+}
+
+std::string toCsvLine(const OrderEvent& event) {
+    std::stringstream os{};
+    os << event.timestamp << ',' << toChar(event.type)  << ',' << event.orderId << ',';
+    switch (event.type) {
+        case OrderType::Add:
+            os << toChar(event.side) << ',' << event.price << ',' << event.quantity; break;
+        case OrderType::Cancel:
+            os << ",,";
+            break;
+        case OrderType::Modify:
+        case OrderType::Execute:
+            os << ",," << event.quantity;
+            break;
+        default :
+            // the function only takes already read and translated order to this should never happen
+            assert(false && "toCsvLine: event with no type");
+            return {};
+    }
+    return os.str();
 }

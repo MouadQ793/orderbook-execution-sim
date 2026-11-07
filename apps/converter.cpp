@@ -7,9 +7,10 @@
 int main() {
 
     std::ifstream testBook{};
-    testBook.open("Data/MSFT_2012-06-21_34200000_57600000_message_10.csv"); // explicitely opening book
+    std::ofstream convertedBook{"Data/testing/lobster_first12_converted.csv"};
+    testBook.open("Data/testing/lobster_first12.csv"); // explicitely opening book
 
-    if (!testBook) {
+    if (!testBook || !convertedBook) { // handle each error on its own later
         std::cerr << "Couldn't read the book, check Path " << std::endl;
         return 1;
     }
@@ -17,6 +18,9 @@ int main() {
     std::string orderInput{};
     QuantityMap qtyTracker{};
 
+    //std::getline(testBook, orderInput); // to get out the first line
+
+    convertedBook << "timestamp,type,order_id,side,price,quantity" << '\n';
     while (std::getline(testBook, orderInput)){
         // reads the events
         std::array<std::string_view, fieldCount> fields{splitOrder(orderInput)};
@@ -34,6 +38,7 @@ int main() {
             continue;   // skip to the next line
         }
         printOrder(*order);
+        convertedBook << toCsvLine(*order) << '\n';
     }
     return 0;
 }
