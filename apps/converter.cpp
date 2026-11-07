@@ -8,7 +8,7 @@
 int main() {
 
     std::ifstream testBook{};
-    std::ofstream convertedBook{"Data/testing/converted_book_lobster.csv"};
+    std::ofstream convertedBook{"Data/converted_book_lobster.csv"};
     testBook.open("Data/MSFT_2012-06-21_34200000_57600000_message_10.csv"); // explicitely opening book
 
     if (!testBook || !convertedBook) { // handle each error on its own later
@@ -17,7 +17,9 @@ int main() {
     }
 
     // counters for the translated lines
-    std::int64_t readLines{0},validLines{0},invalidLines{0},skippedLines{0},countA{0},countM{0},countC{0},countE{0};
+    std::int64_t readLines{0},validLines{0},invalidLines{0},skippedLines{0},countA{0},countM{0},countC{0},countE{0},previousTime{0},backwardTimestamps{0};
+
+    // map tracker and line inputs
     std::string orderInput{};
     QuantityMap qtyTracker{};
 
@@ -25,6 +27,7 @@ int main() {
 
     convertedBook << "timestamp,type,order_id,side,price,quantity" << '\n';
     while (std::getline(testBook, orderInput)){
+
         // reads the events
         std::array<std::string_view, fieldCount> fields{splitOrder(orderInput)};
         readLines++;
@@ -42,6 +45,12 @@ int main() {
             continue;   // skip to the next line
         }
         // printOrder(*order); can use it to see printed orders, removed because slow
+
+        // we check if the previous Time is bigger
+        std::int64_t currentTime{order->timestamp};
+        if (currentTime < previousTime) backwardTimestamps++;
+        previousTime = order->timestamp;
+
         convertedBook << toCsvLine(*order) << '\n';
         validLines++;
         switch (order->type) {
@@ -63,5 +72,7 @@ int main() {
     std::cout << "Number of modify orders " << countM << '\n';
     std::cout << "Number of execute orders " << countE << '\n';
     std::cout << "Number of cancel orders " << countC << '\n';
+    std::cout << "backward Timestamps count " << backwardTimestamps << '\n';
+
     return 0;
 }

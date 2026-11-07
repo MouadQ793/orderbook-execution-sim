@@ -135,6 +135,13 @@ TEST(timeToNano, RejectsNonNumericFraction) {
 
 }
 
+TEST(timeToNano, MoreThanNineDigits) {
+    std::string_view lobsterTime{"34200.1234567891"};
+    const std::optional<std::int64_t> time{timeToNano(lobsterTime)};
+
+    ASSERT_TRUE(time.has_value());
+    EXPECT_EQ(time, 123'456'789);
+}
 // Checking Lobster Parser
 
 TEST(parseLobsterEvent, ParsesNewOrder) {

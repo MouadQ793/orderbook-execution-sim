@@ -134,17 +134,18 @@ std::optional<std::int64_t> timeToNano(std::string_view originalTime) {
     if (position == std::string_view::npos) return base;
 
     // if there is a dot
-    // we check if the parsing is valid and not typo
-    // then if there are indeed 9 numbers for nano convention
-    std::size_t checkNano{(originalTime.substr(position + 1 ,originalTime.size() - position )).size()};
-    std::optional<std::int64_t> nanos{parseInt(originalTime.substr(position + 1,originalTime.size() - position ))};
+    // first we take all the fraction part, and we check if there is more than fractionMaxSize digits or if there is no digits
+    // if we have more we truncated, if we have none we return nullopt
+    std::string_view fraction{originalTime.substr(position +1)};
+    if (fraction.size() > fractionMaxSize) fraction = fraction.substr(0,fractionMaxSize);
+    std::optional<std::int64_t> nanos{parseInt(fraction)};
     if (!nanos.has_value()) return std::nullopt;
 
-    // if it's fine compute the power missing for nanos, add both and return time
-    const int power{9 - static_cast<int>(checkNano)};
-    if (checkNano <9) *nanos = *nanos * powint(10, power);
-    time = base + *nanos;
+    // if we have in between, we add zeros to the end and convert to the finale time
 
+    const int power { 9 - static_cast<int>(fraction.size())};
+    nanos = *nanos * powint(10, power);
+    time = base + *nanos;
     return time;
 }
 

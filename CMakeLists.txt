@@ -14,12 +14,10 @@ FetchContent_MakeAvailable(googletest)
 
 add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror)
 
-add_library(projet_lib src/library.cpp
+add_library(projet_lib
         src/parsing.cpp)
 target_include_directories(projet_lib PUBLIC include)
 
-add_executable(projet main.cpp)
-target_link_libraries(projet PRIVATE projet_lib)
 
 add_executable(converter apps/converter.cpp)
 target_link_libraries(converter PRIVATE projet_lib)

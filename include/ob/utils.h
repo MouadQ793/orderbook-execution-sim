@@ -14,3 +14,4 @@ constexpr std::int64_t powint(std::int64_t base, int exp) {
 
 constexpr std::int64_t nsPerSecond{powint(10, 9)};
 constexpr std::int64_t openSeconds{34200};
+constexpr std::size_t fractionMaxSize{9};
