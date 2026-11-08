@@ -24,7 +24,8 @@ add_executable(converter apps/converter.cpp)
 target_link_libraries(converter PRIVATE projet_lib)
 
 enable_testing()
-add_executable(tests tests/test.cpp)
+add_executable(tests tests/ParsingTest.cpp
+        tests/OrderBookTest.cpp)
 target_link_libraries(tests PRIVATE projet_lib GTest::gtest_main)
 include(GoogleTest)
 gtest_discover_tests(tests)

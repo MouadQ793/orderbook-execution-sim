@@ -1,7 +1,7 @@
 
 #include <gtest/gtest.h>
 #include "ob/parsing.h"
-#include "ob/OrderBook.h"
+
 
 // Fitting order events
 TEST(FitOrderEvent, ParsesValidAdd) {

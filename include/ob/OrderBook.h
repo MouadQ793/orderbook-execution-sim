@@ -35,8 +35,8 @@ public:
     BookStatus execute(std::int64_t id, std::int64_t quantity);
 
     // getting the best offer for either sides, const because they only read the book
-    std::optional<TopOfBook> getBid() const;
-    std::optional<TopOfBook> getAsk() const;
+    std::optional<TopOfBook> bestBid() const;
+    std::optional<TopOfBook> bestAsk() const;
 
 
 private:
