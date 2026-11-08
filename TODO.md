@@ -6,6 +6,6 @@ these are changes and optimizations I aim to do after finishing the project.
 - too much if (!type.has_value()) return std::nullopt; turn it into a function
 - add exceptions in partial treatement of orders when total is negative
 - The invalid lines aren't really invalid but rather orders of type 5 which aren't studied in first version. to fix later
-
+- Fix wraparound of splitOrder, not urgent because LobsterData is clean.
 ## Part 2 : OrderBook
 - According to claude there is a more efficient way to remove the duplicate part in BookStatus::Add, to do later. 

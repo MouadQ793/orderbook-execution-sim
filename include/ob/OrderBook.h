@@ -21,8 +21,8 @@ enum class BookStatus : std::uint8_t {
 };
 
 struct TopOfBook {
-    int64_t price{};
-    int64_t totalQty{};
+    std::int64_t price{};
+    std::int64_t totalQty{};
 };
 
 class OrderBook {
@@ -37,7 +37,6 @@ public:
     // getting the best offer for either sides, const because they only read the book
     std::optional<TopOfBook> bestBid() const;
     std::optional<TopOfBook> bestAsk() const;
-
 
 private:
     struct Order {

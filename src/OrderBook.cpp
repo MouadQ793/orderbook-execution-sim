@@ -70,3 +70,40 @@ std::optional<TopOfBook> OrderBook::bestBid() const {
     return topOfBook;
 
 }
+
+BookStatus OrderBook::cancel(std::int64_t id) {
+    const auto ind = m_index.find(id);
+    if (ind == m_index.end()) return BookStatus::UnknownId;
+    Location location = {ind -> second};
+
+    switch (location.side) {
+        case Side::Buy: {
+            // Find the id in the index to get location
+            // for the given id find the associated level,
+            // in the level use iterator from associated location to remove order from queue
+            // remove quantity from total
+            // then delete the level if qty is 0
+            // finally remove the id from index
+            Level& level {m_bidSide.find(location.price)->second};
+            level.totalQty -= location.pt->quantity;
+            level.queue.erase(location.pt);
+            if (level.queue.empty()) m_bidSide.erase(location.price);
+            m_index.erase(ind);
+            return BookStatus::Ok;
+        }
+        case Side::Sell: {
+            Level& level {m_askSide.find(location.price)->second};
+            level.totalQty -= location.pt->quantity;
+            level.queue.erase(location.pt);
+            if (level.queue.empty()) m_askSide.erase(location.price);
+            m_index.erase(ind);
+            return BookStatus::Ok;
+        }
+        case Side::None:
+        default:
+            assert(false && " an order in the index has no side");
+            return BookStatus::InvalidOrder;
+
+        }
+    }
+
