@@ -14,6 +14,7 @@ BookStatus OrderBook::add(const OrderEvent& event) {
     if (m_index.contains(event.orderId)) return BookStatus::DuplicateId;
     if (event.quantity <= 0) return BookStatus::InvalidOrder;
     if (event.price <= 0) return BookStatus::InvalidOrder;
+    removeCrossedLevels(event.side,event.price); // stopping cross over from happening.
 
     switch (event.side) {
         case Side::Buy: {
@@ -240,4 +241,38 @@ void OrderBook::print(std::ostream& out) const {
         out << ']';
     }
     out << '\n';
+}
+
+void OrderBook::removeCrossedLevels(Side side, std::int64_t price) {
+    switch (side) {
+        case Side::Buy:
+            while (!m_askSide.empty() && m_askSide.begin()->first <= price) {
+                auto levelIt{m_askSide.begin()};
+                Level& level{levelIt->second};
+                for (const Order& order : level.queue) {
+                    m_index.erase(order.id);
+                    ++m_staleRemoved;
+                }
+                m_askSide.erase(levelIt);
+            }
+            break;
+        case Side::Sell:
+            while (!m_bidSide.empty() && m_bidSide.begin()->first >= price) {
+                auto levelIt{m_bidSide.begin()};
+                Level& level{levelIt->second};
+                for (const Order& order : level.queue) {
+                    m_index.erase(order.id);
+                    ++m_staleRemoved;
+                }
+                m_bidSide.erase(levelIt);
+            }
+            break;
+        case Side::None:
+        default:
+            assert(false && " removeCrossedLevels: new order with no side");
+    }
+}
+
+void OrderBook::printStaleRemoved() const {
+    std::cout << " The number of lines removed because of a crossover is " << this->m_staleRemoved;
 }

@@ -43,8 +43,13 @@ public:
 
     // function to print state of the book
     void print(std::ostream& out) const;
+    void removeCrossedLevels(Side side, std::int64_t price);
+    void printStaleRemoved() const;
+    std::int64_t staleRemoved() const { return m_staleRemoved; }
 
 private:
+    std::int64_t m_staleRemoved{};
+
     struct Order {
         std::int64_t id{};
         std::int64_t quantity{};

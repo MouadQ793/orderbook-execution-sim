@@ -20,40 +20,21 @@ int main() {
 
     std::string orderInput{};
     std::getline(testBook, orderInput);   // header
-
-    std::int64_t lineNumber{1};           // the header was line 1
-    std::int64_t notOk{0};
-
+    int c{0};
     while (std::getline(testBook, orderInput)) {
-        ++lineNumber;
         std::array<std::string_view, fieldCount> fields{splitOrder(orderInput)};
         std::optional<OrderEvent> event{fitOrderEvent(fields)};
 
-        if (!event) {
-            std::cerr << "Invalid line " << lineNumber << ": " << orderInput << '\n';
-            continue;
-        }
+        orderBook.apply(*event);
+        std::optional<TopOfBook> bestbid{orderBook.bestBid()};
+        std::optional<TopOfBook> bestask{orderBook.bestAsk()};
 
-        const BookStatus status{orderBook.apply(*event)};
-        if (status != BookStatus::Ok) {
-            ++notOk;
-            if (notOk <= 10) {   // show only the first few
-                std::cout << "Rejected at line " << lineNumber << ": " << orderInput
-                          << " (status " << static_cast<int>(status) << ")\n";
-            }
-        }
-
-
-        // stop at the first moment the book is crossed
-        const std::optional<TopOfBook> bid{orderBook.bestBid()};
-        const std::optional<TopOfBook> ask{orderBook.bestAsk()};
-        if (bid && ask && bid->price >= ask->price) {
-            std::cout << "Book crossed at line " << lineNumber << ": " << orderInput << '\n';
-            orderBook.print(std::cout);
-            break;
+        if (bestbid && bestask && bestbid->price >= bestask->price) {
+           c++;
         }
     }
+    std::cout << c;
+    orderBook.printStaleRemoved();
 
-    std::cout << "Lines read: " << lineNumber << ", rejected by the book: " << notOk << '\n';
     return 0;
 }
