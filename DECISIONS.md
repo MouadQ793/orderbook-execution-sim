@@ -22,7 +22,20 @@
 - The backward time stamps sanity check found 3 issues where the lobster data had 12 digits fractions which produced unwanted behavior with timeToNano, I implemented truncation to fix, afterward 0 backward timestamps and the safety test passes. 
 
 ## Part 2 : Order Book 
-- we use a map instead of vector because a new price between 2 levels shifts the vector in memory and invalidates the iterators.
-- We keep track of total quantity so we don't have to compute it everytime over all the orders sitting at a price
-- the Index have a side to tell if we go to bid or ask map, price of the find the level, and iterator to reach the order inside the queue
-- when a level is empty it's erased. 
+
+### Structure
+- OrderBook is a class with private containers: only the public functions related to the order types can change the book.
+- Order / Level / Location are private nested structures.
+- Each side is a std::map<price, Level>: bids sorted with "std::greater", and asks by default.
+- Level also stores its price, duplicating the map key used for lookups.
+
+### Interface
+- add takes a complete 'OrderEvent', which we defined in the first part; cancel takes only the ID; modify and execute take both the ID and the quantity.
+- Every operation returns an enum class instance, BookStatus, to report whether the order was incorporated properly.
+- All critical checks are done before the operation is executed.
+
+### Validation of operations
+- Add: rejects types other than Add, duplicate IDs, non positive prices and quantities, and empty sides.
+- Cancel: cancel and a full 'execute' share a private helper, removeOrder, which execute calls if the quantity consumes the whole order.
+- Execute: executes the order; if the execution is bigger than the current quantity, it's rejected.
+- Modify: receives the new quantity; if it's bigger than the current one, it moves the order down in the execution order.

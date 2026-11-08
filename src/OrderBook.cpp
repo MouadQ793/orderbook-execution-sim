@@ -74,8 +74,12 @@ std::optional<TopOfBook> OrderBook::bestBid() const {
 BookStatus OrderBook::cancel(std::int64_t id) {
     const auto ind = m_index.find(id);
     if (ind == m_index.end()) return BookStatus::UnknownId;
-    Location location = {ind -> second};
+    removeOrder(ind);
+    return BookStatus::Ok;
+}
 
+void OrderBook::removeOrder(IndexIt ind) {
+    Location location = {ind -> second};
     switch (location.side) {
         case Side::Buy: {
             // Find the id in the index to get location
@@ -89,7 +93,7 @@ BookStatus OrderBook::cancel(std::int64_t id) {
             level.queue.erase(location.pt);
             if (level.queue.empty()) m_bidSide.erase(location.price);
             m_index.erase(ind);
-            return BookStatus::Ok;
+            return;
         }
         case Side::Sell: {
             Level& level {m_askSide.find(location.price)->second};
@@ -97,13 +101,81 @@ BookStatus OrderBook::cancel(std::int64_t id) {
             level.queue.erase(location.pt);
             if (level.queue.empty()) m_askSide.erase(location.price);
             m_index.erase(ind);
+            return ;
+        }
+        case Side::None:
+        default:
+            assert(false && " an order in the index has no side");
+            return ;
+    }
+}
+
+
+BookStatus OrderBook::execute(std::int64_t id, std::int64_t quantity) {
+    const auto ind = m_index.find(id);
+    if (ind == m_index.end()) return BookStatus::UnknownId;
+    // negative quantity is a mistake
+    if (quantity <= 0 ) return BookStatus::InvalidOrder;
+
+    Location& location {ind->second};
+    std::int64_t remainingQty {ind->second.pt->quantity};
+    // we compare the quantities to deem if the order is equivalent to cancel, undoable, or doable.
+    if (quantity > remainingQty) return BookStatus::ExcessQuantity;
+    if (quantity == remainingQty) {
+        removeOrder(ind);
+        return BookStatus::Ok;
+    }
+    switch (location.side) {
+        case Side::Buy: {
+            Level &level{m_bidSide.find(location.price)->second};
+            level.totalQty -= quantity;
+            location.pt->quantity -= quantity;
+            break;
+        }
+        case Side::Sell: {
+            Level &level{m_askSide.find(location.price)->second};
+            level.totalQty -= quantity;
+            location.pt->quantity -= quantity;
+            break;
+        }
+        case Side::None:
+        default:
+            assert(false && " an order in the index has no side");
+            return BookStatus::InvalidOrder;
+    }
+    return BookStatus::Ok;
+}
+
+BookStatus OrderBook::modify(std::int64_t id, std::int64_t quantity) {
+    IndexIt ind = m_index.find(id);
+    if (ind == m_index.end()) return BookStatus::UnknownId;
+    if (quantity <= 0 ) return BookStatus::InvalidOrder;
+    Location& location {ind->second};
+    std::int64_t diffQty  {quantity - location.pt->quantity};
+
+    switch (location.side) {
+        case Side::Buy: {
+            Level& level{m_bidSide.find(location.price)->second};
+            level.totalQty += diffQty;
+            location.pt->quantity = quantity;
+            if (diffQty > 0 ) {
+                level.queue.splice(level.queue.end(),level.queue , location.pt);
+            }
+            return BookStatus::Ok;
+        }
+        case Side::Sell:{
+            Level& level{m_askSide.find(location.price)->second};
+            level.totalQty += diffQty;
+            location.pt->quantity = quantity;
+            if (diffQty > 0 ) {
+                level.queue.splice(level.queue.end(),level.queue , location.pt);
+            }
             return BookStatus::Ok;
         }
         case Side::None:
         default:
             assert(false && " an order in the index has no side");
             return BookStatus::InvalidOrder;
-
-        }
     }
 
+}

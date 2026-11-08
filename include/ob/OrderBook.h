@@ -18,6 +18,7 @@ enum class BookStatus : std::uint8_t {
     DuplicateId,
     UnknownId,
     InvalidOrder,
+    ExcessQuantity,
 };
 
 struct TopOfBook {
@@ -58,5 +59,6 @@ private:
     std::map<std::int64_t, Level, std::greater<std::int64_t>> m_bidSide{}; // std::greater tells the map to rank biggest to small on the int64_t param
     std::map<std::int64_t, Level> m_askSide{};
     std::unordered_map<std::int64_t, Location> m_index;
-
+    using IndexIt = std::unordered_map<std::int64_t, Location>::iterator; // to make the helper function more readable
+    void removeOrder(IndexIt ind);
 };
