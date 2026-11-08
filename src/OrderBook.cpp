@@ -5,6 +5,7 @@
 #include "ob/OrderBook.h"
 #include <cassert>
 #include <iterator>
+#include <iostream>
 
 BookStatus OrderBook::add(const OrderEvent& event) {
 
@@ -178,4 +179,65 @@ BookStatus OrderBook::modify(std::int64_t id, std::int64_t quantity) {
             return BookStatus::InvalidOrder;
     }
 
+}
+
+BookStatus OrderBook::apply(const OrderEvent& event) {
+
+    switch (event.type) {
+        case OrderType::Add:
+            return add(event);
+        case OrderType::Modify:
+            return modify(event.orderId, event.quantity);
+        case OrderType::Cancel:
+            return cancel(event.orderId);
+        case OrderType::Execute:
+            return execute(event.orderId, event.quantity);
+        case OrderType::None:
+            return BookStatus::InvalidOrder;
+        default:
+            assert(false && " Apply : an order in the index has no type");
+            return BookStatus::InvalidOrder;
+    }
+
+}
+
+// the std::ostream param is to decite where to print
+void OrderBook::print(std::ostream& out) const {
+    // Bids: best (highest) price first, thanks to std::greater
+    out << "Bids: ";
+    if (m_bidSide.empty()) out << "empty";
+    bool firstLevel{true};
+    for (const auto& [price, level] : m_bidSide) {
+        if (!firstLevel) out << ", ";
+        firstLevel = false;
+        out << price << " --> [";
+
+        bool firstOrder{true};  // reset for each level
+        for (const auto& rank : level.queue) {
+            if (!firstOrder) out << ", ";
+            firstOrder = false;
+            out << '#' << rank.id << ':' << rank.quantity;
+        }
+        out << ']';
+    }
+    out << '\n';
+
+    // Asks: best (lowest) price first
+    out << "Asks: ";
+    if (m_askSide.empty()) out << "empty";
+    firstLevel = true;          // reset for the other side
+    for (const auto& [price, level] : m_askSide) {
+        if (!firstLevel) out << ", ";
+        firstLevel = false;
+        out << price << " --> [";
+
+        bool firstOrder{true};  // reset for each level
+        for (const auto& rank : level.queue) {
+            if (!firstOrder) out << ", ";
+            firstOrder = false;
+            out << '#' << rank.id << ':' << rank.quantity;
+        }
+        out << ']';
+    }
+    out << '\n';
 }

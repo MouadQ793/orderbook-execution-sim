@@ -28,6 +28,9 @@ target_include_directories(projet_lib PUBLIC include)
 add_executable(converter apps/converter.cpp)
 target_link_libraries(converter PRIVATE projet_lib)
 
+add_executable(replay apps/replay.cpp)
+target_link_libraries(replay PRIVATE projet_lib)
+
 enable_testing()
 add_executable(tests tests/ParsingTest.cpp
         tests/OrderBookTest.cpp)

@@ -9,6 +9,7 @@
 #include <map>
 #include "message.h"
 #include <functional>
+#include <iosfwd>
 #include <optional>
 
 
@@ -34,10 +35,14 @@ public:
     BookStatus cancel(std::int64_t id);
     BookStatus modify(std::int64_t id, std::int64_t quantity);
     BookStatus execute(std::int64_t id, std::int64_t quantity);
+    BookStatus apply(const OrderEvent& event);
 
     // getting the best offer for either sides, const because they only read the book
     std::optional<TopOfBook> bestBid() const;
     std::optional<TopOfBook> bestAsk() const;
+
+    // function to print state of the book
+    void print(std::ostream& out) const;
 
 private:
     struct Order {

@@ -274,6 +274,26 @@ TEST(OrderBook, ModifyUnknownOrInvalidChangesNothing) {
 }
 
 
+// Test Apply
+
+TEST(OrderBook, ApplyRoutesEachType) {
+    OrderBook book{};
+    EXPECT_EQ(book.apply(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 50}), BookStatus::Ok);
+    expectTop(book.bestBid(), 100, 50);
+
+    EXPECT_EQ(book.apply(OrderEvent{1, OrderType::Modify, 1, Side::None, 0, 30}), BookStatus::Ok);
+    expectTop(book.bestBid(), 100, 30);
+
+    EXPECT_EQ(book.apply(OrderEvent{2, OrderType::Execute, 1, Side::None, 0, 10}), BookStatus::Ok);
+    expectTop(book.bestBid(), 100, 20);
+
+    EXPECT_EQ(book.apply(OrderEvent{3, OrderType::Cancel, 1}), BookStatus::Ok);
+    EXPECT_FALSE(book.bestBid().has_value());
+
+    EXPECT_EQ(book.apply(OrderEvent{4, OrderType::None, 2, Side::Buy, 100, 10}), BookStatus::InvalidOrder);
+    EXPECT_FALSE(book.bestBid().has_value());
+}
+
 
 
 

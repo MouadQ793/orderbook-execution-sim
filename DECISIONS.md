@@ -39,3 +39,8 @@
 - Cancel: cancel and a full 'execute' share a private helper, removeOrder, which execute calls if the quantity consumes the whole order.
 - Execute: executes the order; if the execution is bigger than the current quantity, it's rejected.
 - Modify: receives the new quantity; if it's bigger than the current one, it moves the order down in the execution order.
+
+## Data Inconsistency 
+- Replaying the full MSFT day, the book becomes crossed at converted line 4,797 (best bid 31.08 >= best ask 31.08), with 0 messages rejected by the book, because the Lobster message file adds some orders and never removes them (around 2 % of the orders)
+- It seems the orders are removed in the lobsterbook snapshot reference but without any messages doing so.
+- Will handle them by making an "uncross rule" canceling orders when they cross.
