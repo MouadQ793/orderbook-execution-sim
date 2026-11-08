@@ -1,5 +1,5 @@
 ## Decisions
-## Parsing
+## Part 1 : Parsing
 - MSFT data  for large-tick stock.
 - Prices  will be int64_t type for exact comparisons and no rounding errors, quantities of orders as signed integers.
 - Times stamps will be int64_t because int32_t would overflow.
@@ -14,9 +14,15 @@
 - Fields not used by a message type keep their default value (0 or None as defined in  the header message).
 
 ## conversion 
-- Unkown events are from orders placed before 9:30 which I don't have access to so they are ignored in the quantity tracker.
+- Unknown events are from orders placed before 9:30 which I don't have access to so they are ignored in the quantity tracker.
 - a partial cancel becomes an M with the remaining quantity
 - prices are divided by 100 to be ticks of 0.01
 - timestamps are nanoseconds after 930 
 - Types 5 (hidden executions), 6 (cross trades) and 7 (halts) produce no output line: they don’t change the visible book. Hidden executions are about 11% of executions by
 - The backward time stamps sanity check found 3 issues where the lobster data had 12 digits fractions which produced unwanted behavior with timeToNano, I implemented truncation to fix, afterward 0 backward timestamps and the safety test passes. 
+
+## Part 2 : Order Book 
+- we use a map instead of vector because a new price between 2 levels shifts the vector in memory and invalidates the iterators.
+- We keep track of total quantity so we don't have to compute it everytime over all the orders sitting at a price
+- the Index have a side to tell if we go to bid or ask map, price of the find the level, and iterator to reach the order inside the queue
+- when a level is empty it's erased. 
