@@ -11,6 +11,7 @@ TEST(OrderBook, EmptyBookHasNoBestPrices) {
 
     ASSERT_FALSE(ask.has_value());
     ASSERT_FALSE(bid.has_value());
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, AddBuySetsBestBid) {
@@ -21,6 +22,7 @@ TEST(OrderBook, AddBuySetsBestBid) {
     ASSERT_TRUE(bid.has_value());
     EXPECT_EQ(bid->price, 100);
     EXPECT_EQ(bid->totalQty, 50);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, AddSellSetsBestAsk) {
@@ -31,6 +33,7 @@ TEST(OrderBook, AddSellSetsBestAsk) {
     ASSERT_TRUE(ask.has_value());
     EXPECT_EQ(ask->price, 103);
     EXPECT_EQ(ask->totalQty, 30);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, SamePriceAddsToTotal) {
@@ -42,6 +45,7 @@ TEST(OrderBook, SamePriceAddsToTotal) {
     ASSERT_TRUE(bid.has_value());
     EXPECT_EQ(bid->price, 100);
     EXPECT_EQ(bid->totalQty, 80);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, BetterBidBecomesBest) {
@@ -54,6 +58,7 @@ TEST(OrderBook, BetterBidBecomesBest) {
     ASSERT_TRUE(bid.has_value());
     EXPECT_EQ(bid->price, 105);
     EXPECT_EQ(bid->totalQty, 15);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, WorseAskDoesNotChangeBest) {
@@ -66,6 +71,7 @@ TEST(OrderBook, WorseAskDoesNotChangeBest) {
     ASSERT_TRUE(ask.has_value());
     EXPECT_EQ(ask->price, 103);
     EXPECT_EQ(ask->totalQty, 30);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, DuplicateIdRejected) {
@@ -80,6 +86,7 @@ TEST(OrderBook, DuplicateIdRejected) {
     EXPECT_EQ(bid->price, 100);
     EXPECT_EQ(bid->totalQty, 50);
     ASSERT_FALSE(ask.has_value());
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, InvalidOrdersRejected) {
@@ -95,6 +102,7 @@ TEST(OrderBook, InvalidOrdersRejected) {
     const std::optional<TopOfBook> bid{book.bestBid()};
     ASSERT_FALSE(ask.has_value());
     ASSERT_FALSE(bid.has_value());
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 
@@ -109,6 +117,7 @@ TEST(OrderBook, CancelOnlyBuyEmptiesBidSide) {
 
     const std::optional<TopOfBook> bid{book.bestBid()};
     ASSERT_FALSE(bid.has_value());
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, CancelOnlySellEmptiesAskSide) {
@@ -121,6 +130,7 @@ TEST(OrderBook, CancelOnlySellEmptiesAskSide) {
     const std::optional<TopOfBook> bid{book.bestBid()};
     ASSERT_TRUE(bid.has_value());
     ASSERT_FALSE(ask.has_value());
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, CancelOneOfTwoKeepsLevel) {
@@ -134,6 +144,7 @@ TEST(OrderBook, CancelOneOfTwoKeepsLevel) {
     ASSERT_TRUE(bid.has_value());
     EXPECT_EQ(bid->price, 100);
     EXPECT_EQ(bid->totalQty, 140);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, CancelBestLevelMovesBestBid) {
@@ -148,6 +159,7 @@ TEST(OrderBook, CancelBestLevelMovesBestBid) {
     ASSERT_FALSE(ask.has_value());
     EXPECT_EQ(bid->price, 99);
     EXPECT_EQ(bid->totalQty, 140);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, CancelUnknownIdChangesNothing) {
@@ -164,6 +176,7 @@ TEST(OrderBook, CancelUnknownIdChangesNothing) {
     EXPECT_EQ(ask->price, 103);
     EXPECT_EQ(bid->totalQty, 50);
     EXPECT_EQ(ask->totalQty, 140);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, CancelTwiceRejectsSecond) {
@@ -178,6 +191,7 @@ TEST(OrderBook, CancelTwiceRejectsSecond) {
     ASSERT_TRUE(bid.has_value());
     ASSERT_FALSE(ask.has_value());
     EXPECT_EQ(bid->price, 100);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 
@@ -199,6 +213,7 @@ TEST(OrderBook, ExecutePartialReducesOrderAndLevel) {
     EXPECT_EQ(book.execute(1, 21), BookStatus::ExcessQuantity);
     EXPECT_EQ(book.execute(1, 20), BookStatus::Ok);
     EXPECT_FALSE(book.bestBid().has_value());
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, ExecuteFullRemovesOnlyOrderAndLevel) {
@@ -207,6 +222,7 @@ TEST(OrderBook, ExecuteFullRemovesOnlyOrderAndLevel) {
     EXPECT_EQ(book.execute(1, 150), BookStatus::Ok);
     EXPECT_FALSE(book.bestAsk().has_value());
     EXPECT_EQ(book.cancel(1), BookStatus::UnknownId);   // also gone from the index
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, ExecuteFullFirstOfTwoKeepsLevel) {
@@ -215,6 +231,7 @@ TEST(OrderBook, ExecuteFullFirstOfTwoKeepsLevel) {
     EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 2, Side::Sell, 105, 120}), BookStatus::Ok);
     EXPECT_EQ(book.execute(1, 200), BookStatus::Ok);
     expectTop(book.bestAsk(), 105, 120);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, ExecuteUnknownIdChangesNothing) {
@@ -222,6 +239,7 @@ TEST(OrderBook, ExecuteUnknownIdChangesNothing) {
     EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 50}), BookStatus::Ok);
     EXPECT_EQ(book.execute(42, 10), BookStatus::UnknownId);
     expectTop(book.bestBid(), 100, 50);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, ExecuteExcessOrInvalidChangesNothing) {
@@ -231,6 +249,7 @@ TEST(OrderBook, ExecuteExcessOrInvalidChangesNothing) {
     EXPECT_EQ(book.execute(1, 0), BookStatus::InvalidOrder);
     EXPECT_EQ(book.execute(1, -5), BookStatus::InvalidOrder);
     expectTop(book.bestBid(), 100, 50);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 
@@ -241,6 +260,7 @@ TEST(OrderBook, ModifyDecreaseReducesTotal) {
     EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 50}), BookStatus::Ok);
     EXPECT_EQ(book.modify(1, 30), BookStatus::Ok);
     expectTop(book.bestBid(), 100, 30);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, ModifyIncreaseRaisesTotal) {
@@ -248,6 +268,7 @@ TEST(OrderBook, ModifyIncreaseRaisesTotal) {
     EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 1, Side::Sell, 102, 50}), BookStatus::Ok);
     EXPECT_EQ(book.modify(1, 80), BookStatus::Ok);
     expectTop(book.bestAsk(), 102, 80);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, ModifiedOrderStaysUsable) {
@@ -262,6 +283,7 @@ TEST(OrderBook, ModifiedOrderStaysUsable) {
     expectTop(book.bestBid(), 100, 100);
     EXPECT_EQ(book.cancel(1), BookStatus::Ok);
     expectTop(book.bestBid(), 100, 50);                // only order 2 left
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 TEST(OrderBook, ModifyUnknownOrInvalidChangesNothing) {
@@ -271,6 +293,7 @@ TEST(OrderBook, ModifyUnknownOrInvalidChangesNothing) {
     EXPECT_EQ(book.modify(1, 0), BookStatus::InvalidOrder);
     EXPECT_EQ(book.modify(1, -10), BookStatus::InvalidOrder);
     expectTop(book.bestBid(), 100, 50);
+    EXPECT_TRUE(book.checkInvariants());
 }
 
 
@@ -292,31 +315,71 @@ TEST(OrderBook, ApplyRoutesEachType) {
 
     EXPECT_EQ(book.apply(OrderEvent{4, OrderType::None, 2, Side::Buy, 100, 10}), BookStatus::InvalidOrder);
     EXPECT_FALSE(book.bestBid().has_value());
+    EXPECT_TRUE(book.checkInvariants());
 }
 
+// test uncross rule
 
+TEST(OrderBook, BuyCrossingOneAskLevelRemovesIt) {
+    OrderBook book{};
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 1, Side::Sell, 100, 40}), BookStatus::Ok);  // stale ask
+    EXPECT_EQ(book.add(OrderEvent{1, OrderType::Add, 2, Side::Buy, 101, 50}), BookStatus::Ok);   // crosses it
+    EXPECT_FALSE(book.bestAsk().has_value());
+    expectTop(book.bestBid(), 101, 50);          // the new order rests with its FULL quantity
+    EXPECT_EQ(book.staleRemoved(), 1);
+    EXPECT_EQ(book.cancel(1), BookStatus::UnknownId);   // the stale order is gone from the index too
+    EXPECT_TRUE(book.checkInvariants());
+}
 
+TEST(OrderBook, BuyCrossingTwoAskLevelsRemovesBoth) {
+    OrderBook book{};
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 1, Side::Sell, 95, 110}), BookStatus::Ok);
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 2, Side::Sell, 95, 10}), BookStatus::Ok);
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 3, Side::Sell, 99, 50}), BookStatus::Ok);
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 4, Side::Sell, 102, 70}), BookStatus::Ok);  // not crossed
+    EXPECT_EQ(book.add(OrderEvent{1, OrderType::Add, 5, Side::Buy, 100, 95}), BookStatus::Ok);
+    expectTop(book.bestAsk(), 102, 70);          // 95 and 99 removed, 102 kept
+    expectTop(book.bestBid(), 100, 95);
+    EXPECT_EQ(book.staleRemoved(), 3);           // three orders: two at 95, one at 99
+    EXPECT_TRUE(book.checkInvariants());
+}
 
+TEST(OrderBook, BuyEqualToAskCountsAsCrossing) {
+    OrderBook book{};
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 1, Side::Sell, 100, 40}), BookStatus::Ok);
+    EXPECT_EQ(book.add(OrderEvent{1, OrderType::Add, 2, Side::Buy, 100, 50}), BookStatus::Ok);
+    EXPECT_FALSE(book.bestAsk().has_value());
+    EXPECT_EQ(book.staleRemoved(), 1);
+    EXPECT_TRUE(book.checkInvariants());
+}
 
+TEST(OrderBook, NonCrossingAddRemovesNothing) {
+    OrderBook book{};
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 1, Side::Sell, 102, 40}), BookStatus::Ok);
+    EXPECT_EQ(book.add(OrderEvent{1, OrderType::Add, 2, Side::Buy, 101, 50}), BookStatus::Ok);
+    expectTop(book.bestAsk(), 102, 40);
+    expectTop(book.bestBid(), 101, 50);
+    EXPECT_EQ(book.staleRemoved(), 0);
+    EXPECT_TRUE(book.checkInvariants());
+}
 
+TEST(OrderBook, SellCrossingBidLevelsRemovesThem) {
+    OrderBook book{};
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 102, 30}), BookStatus::Ok);
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 2, Side::Buy, 101, 20}), BookStatus::Ok);
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 3, Side::Buy, 99, 60}), BookStatus::Ok);    // not crossed
+    EXPECT_EQ(book.add(OrderEvent{1, OrderType::Add, 4, Side::Sell, 100, 80}), BookStatus::Ok);
+    expectTop(book.bestBid(), 99, 60);           // 102 and 101 removed, 99 kept
+    expectTop(book.bestAsk(), 100, 80);
+    EXPECT_EQ(book.staleRemoved(), 2);
+    EXPECT_TRUE(book.checkInvariants());
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+TEST(OrderBook, NoneSideRejectedBeforeAnyChange) {
+    OrderBook book{};
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 1, Side::Sell, 100, 40}), BookStatus::Ok);
+    EXPECT_EQ(book.add(OrderEvent{1, OrderType::Add, 2, Side::None, 101, 50}), BookStatus::InvalidOrder);
+    expectTop(book.bestAsk(), 100, 40);          // nothing removed
+    EXPECT_EQ(book.staleRemoved(), 0);
+    EXPECT_TRUE(book.checkInvariants());
+}

@@ -45,3 +45,5 @@
 - It seems the orders are removed in the lobsterbook snapshot reference but without any messages doing so.
 - Will handle them by making an "uncross rule" canceling orders when they cross.
 - Uncross rule implemented when a new order crosses the opposite side, the opposite levels at crossing prices are removed.
+- Uncross rule on the full MSFT day yields 2,645 stale orders removed and 0 crossings
+- Invariant checker checks for 5 things, no empty lvl, totals equal queue sums, level prices equals key, index matches queues and book not crossed.

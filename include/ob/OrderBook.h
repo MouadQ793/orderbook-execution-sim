@@ -47,6 +47,9 @@ public:
     void printStaleRemoved() const;
     std::int64_t staleRemoved() const { return m_staleRemoved; }
 
+    bool checkInvariants() const;
+
+
 private:
     std::int64_t m_staleRemoved{};
 

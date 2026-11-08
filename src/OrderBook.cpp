@@ -14,6 +14,7 @@ BookStatus OrderBook::add(const OrderEvent& event) {
     if (m_index.contains(event.orderId)) return BookStatus::DuplicateId;
     if (event.quantity <= 0) return BookStatus::InvalidOrder;
     if (event.price <= 0) return BookStatus::InvalidOrder;
+    if (event.side != Side::Buy && event.side != Side::Sell) return BookStatus::InvalidOrder;
     removeCrossedLevels(event.side,event.price); // stopping cross over from happening.
 
     switch (event.side) {
@@ -51,7 +52,6 @@ BookStatus OrderBook::add(const OrderEvent& event) {
             return BookStatus::Ok;
         }
         case Side::None:
-            return BookStatus::InvalidOrder;
         default:
             assert(false && " Invalid order type");
             return BookStatus::InvalidOrder; // because asserts are removed when built
@@ -275,4 +275,56 @@ void OrderBook::removeCrossedLevels(Side side, std::int64_t price) {
 
 void OrderBook::printStaleRemoved() const {
     std::cout << " The number of lines removed because of a crossover is " << this->m_staleRemoved;
+}
+
+bool OrderBook::checkInvariants() const {
+    // We check  that no invariants are broken eg
+    // Total quantity is the sum of quantities in the list
+    // no empty level is left
+    // prices are mapped correctly
+    // the indexes matches the queues
+    // the side in location match side of book
+    // number of orders in the books match total number of orders
+    // book must never be crossed
+    std::size_t orderCount{0};
+    for (const auto& [price, level]: m_bidSide) {
+        std::int64_t Qty{0};
+        std::int64_t totalQty{level.totalQty};
+        for (const Order& order : level.queue) {
+            Qty += order.quantity;
+            const auto ind{m_index.find(order.id)};
+            if (ind==m_index.end()) return false;
+            if (ind->second.side != Side::Buy) return false;
+            if (&*ind->second.pt != &order ) return false;
+            if (ind->second.price != price) return false;
+            orderCount++;
+        }
+        if (level.price != price) return false;
+        if (totalQty != Qty ) return false;
+        if (level.queue.empty()) return false;
+    }
+
+    for (const auto& [price, level]: m_askSide) {
+        std::int64_t Qty{0};
+        std::int64_t totalQty{level.totalQty};
+        for (const Order& order : level.queue) {
+            Qty += order.quantity;
+            const auto ind{m_index.find(order.id)};
+            if (ind==m_index.end()) return false;
+            if (ind->second.side != Side::Sell) return false;
+            if (&*ind->second.pt != &order ) return false;
+            if (ind->second.price != price) return false;
+            orderCount++;
+        }
+        if (level.price != price) return false;
+        if (totalQty != Qty ) return false;
+        if (level.queue.empty()) return false;
+    }
+    if (orderCount != m_index.size()) return false;
+
+    const std::optional<TopOfBook> bestbid{this->bestBid()};
+    const std::optional<TopOfBook> bestask{this->bestAsk()};
+    if (bestbid && bestask && bestbid->price >= bestask->price) return false;
+
+    return true;
 }

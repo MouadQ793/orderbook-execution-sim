@@ -1,6 +1,7 @@
 #include <cassert>
 #include "ob/OrderBook.h"
-#include <unordered_map>
+#include <array>
+#include <optional>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -20,21 +21,28 @@ int main() {
 
     std::string orderInput{};
     std::getline(testBook, orderInput);   // header
-    int c{0};
+    std::int64_t lineNumber{};
+
     while (std::getline(testBook, orderInput)) {
+        lineNumber++;
         std::array<std::string_view, fieldCount> fields{splitOrder(orderInput)};
         std::optional<OrderEvent> event{fitOrderEvent(fields)};
-
+        if (!event) {
+            continue;
+            // avoids undefind behavior in case a line fails to parse
+        }
         orderBook.apply(*event);
-        std::optional<TopOfBook> bestbid{orderBook.bestBid()};
-        std::optional<TopOfBook> bestask{orderBook.bestAsk()};
 
-        if (bestbid && bestask && bestbid->price >= bestask->price) {
-           c++;
+        if (lineNumber % 10000 == 0 && !orderBook.checkInvariants()) {
+            std::cerr << "invariant broken at line " << lineNumber << '\n';
+            break;
         }
     }
-    std::cout << c;
-    orderBook.printStaleRemoved();
+    if (!orderBook.checkInvariants()) {
+        std::cerr << "invariant broken at end of file\n";
+        return 1;
+    }
+    std::cout << "invariants OK: " << lineNumber << " lines, " << lineNumber / 10000 << " checks + final\n";
 
     return 0;
 }
