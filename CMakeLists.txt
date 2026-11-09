@@ -22,7 +22,8 @@ endif()
 add_library(projet_lib
         src/parsing.cpp
         src/OrderBook.cpp
-        src/Indicators.cpp)
+        src/Indicators.cpp
+        src/QueueTracker.cpp)
 target_include_directories(projet_lib PUBLIC include)
 
 

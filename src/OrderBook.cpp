@@ -32,8 +32,8 @@ BookStatus OrderBook::add(const OrderEvent& event) {
             auto prevIt = std::prev(level.queue.end());
 
             // assigning order of execution
-            Location location = {event.side, event.price, prevIt,this->tickets};
-            this->tickets++;
+            Location location = {event.side, event.price, prevIt,this->m_tickets};
+            this->m_tickets++;
 
             // fill the index
             m_index.insert({event.orderId, location});
@@ -50,8 +50,8 @@ BookStatus OrderBook::add(const OrderEvent& event) {
 
             auto prevIt = std::prev(level.queue.end());
             // order of executions
-            Location location = {event.side, event.price, prevIt,this->tickets};
-            this->tickets++;
+            Location location = {event.side, event.price, prevIt,this->m_tickets};
+            this->m_tickets++;
 
             m_index.insert({event.orderId, location});
             return BookStatus::Ok;
@@ -167,8 +167,8 @@ BookStatus OrderBook::modify(std::int64_t id, std::int64_t quantity) {
             // Checking if the quantity increases so we change the order of execution
             if (location.pt ->quantity < quantity ) {
                 // if the new quantity is bigger move the order to the end of the queue, and change its ticket to the last position
-                location.ticket = this->tickets;
-                this->tickets++;
+                location.ticket = this->m_tickets;
+                this->m_tickets++;
                 level.queue.splice(level.queue.end(),level.queue , location.pt);
             }
             location.pt->quantity = quantity;
@@ -180,8 +180,8 @@ BookStatus OrderBook::modify(std::int64_t id, std::int64_t quantity) {
             // Checking if the quantity increases so we change the order of execution
             if (location.pt ->quantity < quantity ) {
                 // if the new quantity is bigger move the order to the end of the queue, and change its ticket to the last position
-                location.ticket = this->tickets;
-                this->tickets++;
+                location.ticket = this->m_tickets;
+                this->m_tickets++;
                 level.queue.splice(level.queue.end(),level.queue , location.pt);
             }
             location.pt->quantity = quantity;
@@ -373,7 +373,7 @@ std::int64_t OrderBook::depth(Side side, std::int64_t k) const {
 
 std::optional<std::int64_t> OrderBook::queueAhead(std::int64_t orderId) const {
     auto ind{this->m_index.find(orderId)};
-    if (ind == this->m_index.end()) {std::cerr << "Queue Ahead received Unknown Id \n" ; return std::nullopt; }
+    if (ind == this->m_index.end()) {/* std::cerr << "Queue Ahead received Unknown Id \n" ; */ return std::nullopt; }
     std::int64_t queueQty{0};
     Location location{ind->second};
     switch (location.side) {

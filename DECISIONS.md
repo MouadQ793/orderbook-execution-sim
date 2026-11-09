@@ -67,4 +67,12 @@
 - The spread is almost always 1 tick. When it opens to 2 ticks, it closes again almost at once, but those brief states generate a fifth of all messages (liquidity refill, and executions sharing a timestamp). Time-weighted statistics are needed: message counts overstate wide spreads.
 
 - Added Depth public function in orderbook and imbalance computing in indicators, $I_1$ = the level 1 imbalance, and $I_{k=5}$ = the best 5 non empty level
-- Added queueAhead in orderBook which computes the quantity of orders ahead in the same price level in O(1)
+
+### Queue position
+- `queueAhead` returns the quantity ahead of an order at its own level only. It walks the queue, so it is the exact reference, not the O(1) indicator.
+- It returns an optional, since 0 is a real answer (front of the queue).
+- Each order gets an arrival ticket, renewed when a modify increases its quantity (it moves to the back). Comparing tickets says who is ahead in O(1), since `std::list` iterators have no index.
+- `getOrderInfo` returns side, price, quantity and ticket in one lookup.
+- `QueueTracker` follows a few tracked orders incrementally and reads the book by const reference. It is needed because the strategy's simulated orders (Part 4) will never be in the book.
+- The tracker updates before `apply` for other orders (their old quantity is lost after) and after `apply` for the tracked order itself and for orders removed by the uncross rule.
+- Stress test against `queueAhead`: 6.16M comparisons, 0 mismatches.

@@ -10,3 +10,6 @@ these are changes and optimizations I aim to do after finishing the project.
 ## Part 2 : OrderBook
 - According to claude there is a more efficient way to remove the duplicate part in BookStatus::Add, to do later. 
 - Simplify the tests by making a function for repetitve tasks
+## Part 3 Indicators and tracker 
+- Change the structure of tracker to do tracking grouped per level
+- in QueueTRacker : the tracker assumes all the events will be accepted by the book which might not be the case (it is with the msft but might not be with something else so : handle error cases same way as new book)

@@ -65,7 +65,7 @@ public:
 
 private:
     std::int64_t m_staleRemoved{};
-    std::int64_t tickets{0};
+    std::int64_t m_tickets{0};
     struct Order {
         std::int64_t id{};
         std::int64_t quantity{};
