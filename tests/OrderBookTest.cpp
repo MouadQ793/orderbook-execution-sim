@@ -465,9 +465,51 @@ TEST(OrderBookQueueAhead, Modify) {
     EXPECT_TRUE(book.checkInvariants());
 }
 
+TEST(OrderTicketRanking, CorrectRank2Orders) {
+    OrderBook book{};
+    book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 30});
+    book.add(OrderEvent{0, OrderType::Add, 2, Side::Buy, 100, 20});
+    const auto t1{book.getTicket(1)};
+    const auto t2{book.getTicket(2)};
+    ASSERT_TRUE(t1.has_value());
+    ASSERT_TRUE(t2.has_value());
+    EXPECT_LT(*t1, *t2);
+    EXPECT_TRUE(book.checkInvariants());
+}
 
+TEST(OrderTicketRanking, DecreaseNoChange) {
+    OrderBook book{};
+    book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 30});
+    book.add(OrderEvent{0, OrderType::Add, 2, Side::Buy, 100, 20});
+    const auto before{book.getTicket(1)};
+    ASSERT_TRUE(before.has_value());
+    EXPECT_EQ(book.modify(1, 15), BookStatus::Ok);
+    const auto after{book.getTicket(1)};
+    ASSERT_TRUE(after.has_value());
+    EXPECT_EQ(*before, *after);
+    EXPECT_TRUE(book.checkInvariants());
+}
 
+TEST(OrderTicketRanking, IncreaseDoChange) {
+    OrderBook book{};
+    book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 30});
+    book.add(OrderEvent{0, OrderType::Add, 2, Side::Buy, 100, 20});
+    EXPECT_EQ(book.modify(1, 50), BookStatus::Ok);
+    const auto t1{book.getTicket(1)};
+    const auto t2{book.getTicket(2)};
+    ASSERT_TRUE(t1.has_value());
+    ASSERT_TRUE(t2.has_value());
+    EXPECT_GT(*t1, *t2);
+    EXPECT_TRUE(book.checkInvariants());
+}
 
+TEST(OrderTicketRanking, UnkownId) {
+    OrderBook book{};
+    book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 30});
+    book.add(OrderEvent{0, OrderType::Add, 2, Side::Buy, 100, 20});
+    EXPECT_EQ(book.getTicket(8), std::nullopt);
+    EXPECT_TRUE(book.checkInvariants());
+}
 
 
 

@@ -49,10 +49,11 @@ public:
     bool checkInvariants() const;
     std::int64_t depth(Side side, std::int64_t k) const;
     std::optional<std::int64_t> queueAhead(std::int64_t orderId) const ;
+    std::optional<std::int64_t> getTicket(std::int64_t orderId) const;
 
 private:
     std::int64_t m_staleRemoved{};
-
+    std::int64_t tickets{0};
     struct Order {
         std::int64_t id{};
         std::int64_t quantity{};
@@ -67,6 +68,7 @@ private:
         Side side{};
         std::int64_t price{};
         std::list<Order>::iterator pt{};
+        std::int64_t ticket{};
     };
 
     std::map<std::int64_t, Level, std::greater<std::int64_t>> m_bidSide{}; // std::greater tells the map to rank biggest to small on the int64_t param

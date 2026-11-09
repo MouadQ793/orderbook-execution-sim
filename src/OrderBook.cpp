@@ -30,7 +30,11 @@ BookStatus OrderBook::add(const OrderEvent& event) {
 
             // get the iterator of the last element of the queue and store it in location
             auto prevIt = std::prev(level.queue.end());
-            Location location = {event.side, event.price, prevIt};
+
+            // assigning order of execution
+            Location location = {event.side, event.price, prevIt,this->tickets};
+            this->tickets++;
+
             // fill the index
             m_index.insert({event.orderId, location});
             return BookStatus::Ok;
@@ -45,10 +49,11 @@ BookStatus OrderBook::add(const OrderEvent& event) {
             level.price = event.price;
 
             auto prevIt = std::prev(level.queue.end());
-            Location location = {event.side, event.price, prevIt};
+            // order of executions
+            Location location = {event.side, event.price, prevIt,this->tickets};
+            this->tickets++;
 
             m_index.insert({event.orderId, location});
-
             return BookStatus::Ok;
         }
         case Side::None:
@@ -159,19 +164,27 @@ BookStatus OrderBook::modify(std::int64_t id, std::int64_t quantity) {
         case Side::Buy: {
             Level& level{m_bidSide.find(location.price)->second};
             level.totalQty += diffQty;
-            location.pt->quantity = quantity;
-            if (diffQty > 0 ) {
+            // Checking if the quantity increases so we change the order of execution
+            if (location.pt ->quantity < quantity ) {
+                // if the new quantity is bigger move the order to the end of the queue, and change its ticket to the last position
+                location.ticket = this->tickets;
+                this->tickets++;
                 level.queue.splice(level.queue.end(),level.queue , location.pt);
             }
+            location.pt->quantity = quantity;
             return BookStatus::Ok;
         }
         case Side::Sell:{
             Level& level{m_askSide.find(location.price)->second};
             level.totalQty += diffQty;
-            location.pt->quantity = quantity;
-            if (diffQty > 0 ) {
+            // Checking if the quantity increases so we change the order of execution
+            if (location.pt ->quantity < quantity ) {
+                // if the new quantity is bigger move the order to the end of the queue, and change its ticket to the last position
+                location.ticket = this->tickets;
+                this->tickets++;
                 level.queue.splice(level.queue.end(),level.queue , location.pt);
             }
+            location.pt->quantity = quantity;
             return BookStatus::Ok;
         }
         case Side::None:
@@ -386,7 +399,12 @@ std::optional<std::int64_t> OrderBook::queueAhead(std::int64_t orderId) const {
 }
 
 
-
+std::optional<std::int64_t> OrderBook::getTicket(std::int64_t orderId) const {
+    auto ind{this->m_index.find(orderId)};
+    if (ind == m_index.end()) {std::cerr << "getTicket, Unkown ID"; return std::nullopt;}
+    std::int64_t ticket{ind->second.ticket};
+    return ticket;
+}
 
 
 
