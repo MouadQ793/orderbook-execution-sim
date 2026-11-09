@@ -356,3 +356,47 @@ std::int64_t OrderBook::depth(Side side, std::int64_t k) const {
             return 0;
     }
 }
+
+
+std::optional<std::int64_t> OrderBook::queueAhead(std::int64_t orderId) const {
+    auto ind{this->m_index.find(orderId)};
+    if (ind == this->m_index.end()) {std::cerr << "Queue Ahead received Unknown Id \n" ; return std::nullopt; }
+    std::int64_t queueQty{0};
+    Location location{ind->second};
+    switch (location.side) {
+        case Side::Buy: {
+            const Level& level {m_bidSide.find(location.price)->second};
+            for (auto ite{level.queue.begin()}; ite != location.pt; ++ite) {
+                queueQty += ite->quantity;
+            }
+            return queueQty;
+        }
+        case Side::Sell: {
+            const Level& level {m_askSide.find(location.price)->second};
+            for (auto ite{level.queue.begin()}; ite != location.pt; ++ite) {
+                queueQty += ite->quantity;
+            }
+            return queueQty;
+        }
+        case Side::None:
+        default:
+            assert(false && " Error in computing imbalance");
+            return std::nullopt;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

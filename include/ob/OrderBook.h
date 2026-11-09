@@ -46,9 +46,9 @@ public:
     void removeCrossedLevels(Side side, std::int64_t price);
     void printStaleRemoved() const;
     std::int64_t staleRemoved() const { return m_staleRemoved; }
-
     bool checkInvariants() const;
     std::int64_t depth(Side side, std::int64_t k) const;
+    std::optional<std::int64_t> queueAhead(std::int64_t orderId) const ;
 
 private:
     std::int64_t m_staleRemoved{};

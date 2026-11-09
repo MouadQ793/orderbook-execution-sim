@@ -29,8 +29,8 @@ void Indicators::update(const OrderBook& orderBook, const OrderEvent&) {
         this->m_spread = currentBestAsk - currentBestBid;
         this->m_doubleMid = currentBestBid + currentBestAsk;
         this->m_exists = true;
-        this->m_imblance1 = imbalance(currentTopBid->totalQty, currentTopAsk->totalQty);
-        this->m_imblancek = imbalance(orderBook.depth(Side::Buy,imbalanceDepth), orderBook.depth(Side::Sell,imbalanceDepth));
+        this->m_imbalance1 = imbalance(currentTopBid->totalQty, currentTopAsk->totalQty);
+        this->m_imbalancek = imbalance(orderBook.depth(Side::Buy,imbalanceDepth), orderBook.depth(Side::Sell,imbalanceDepth));
     }
     else {this->m_exists = false;}
 
@@ -46,7 +46,7 @@ std::string Indicators::toCsvLine(std::int64_t ts) const {
 
     std::stringstream os{};
     if (m_exists) {
-        os << ts << ',' << this->m_spread << ',' << this->m_doubleMid << ',' << this->m_midChanged << ',' << this->m_imblance1 << ',' << this->m_imblancek;
+        os << ts << ',' << this->m_spread << ',' << this->m_doubleMid << ',' << this->m_midChanged << ',' << this->m_imbalance1 << ',' << this->m_imbalancek;
     } else {
         os << ts << ",,," << this->m_midChanged << ",,";
     }

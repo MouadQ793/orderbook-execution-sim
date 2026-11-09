@@ -383,3 +383,91 @@ TEST(OrderBook, NoneSideRejectedBeforeAnyChange) {
     EXPECT_EQ(book.staleRemoved(), 0);
     EXPECT_TRUE(book.checkInvariants());
 }
+
+// OrderBOokqueue
+TEST(OrderBookQueueAhead, UnknownID) {
+    OrderBook book{};
+    book.add(OrderEvent{0, OrderType::Add, 1, Side::Sell, 100, 40});
+    EXPECT_EQ(book.queueAhead(3), std::nullopt);
+    EXPECT_TRUE(book.checkInvariants());
+}
+
+
+TEST(OrderBookQueueAhead, SingleOrder) {
+    OrderBook book{};
+    book.add(OrderEvent{0, OrderType::Add, 1, Side::Sell, 100, 40});
+    EXPECT_EQ(book.queueAhead(1), 0);
+    EXPECT_TRUE(book.checkInvariants());
+}
+
+TEST(OrderBookQueueAhead, MultipleSameLevelOrders) {
+    OrderBook book{};
+    book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 30});
+    book.add(OrderEvent{0, OrderType::Add, 2, Side::Buy, 100, 20});
+    book.add(OrderEvent{0, OrderType::Add, 3, Side::Buy, 100, 60});
+    EXPECT_EQ(book.queueAhead(3), 50);
+    EXPECT_TRUE(book.checkInvariants());
+}
+
+TEST(OrderBookQueueAhead, OtherOrdersIrrelevant) {
+    OrderBook book{};
+    // three bids at 100 (the queue we test)
+    book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 30});
+    book.add(OrderEvent{0, OrderType::Add, 2, Side::Buy, 100, 20});
+    book.add(OrderEvent{0, OrderType::Add, 3, Side::Buy, 100, 60});
+    // noise: better bid, worse bid, asks above the best bid (no crossing)
+    book.add(OrderEvent{0, OrderType::Add, 4, Side::Buy, 101, 70});
+    book.add(OrderEvent{0, OrderType::Add, 5, Side::Buy, 99, 500});
+    book.add(OrderEvent{0, OrderType::Add, 6, Side::Sell, 102, 1000});
+    book.add(OrderEvent{0, OrderType::Add, 7, Side::Sell, 102, 40});
+
+    EXPECT_EQ(book.queueAhead(1), 0);
+    EXPECT_EQ(book.queueAhead(2), 30);
+    EXPECT_EQ(book.queueAhead(3), 50);   // only #1 and #2 count
+    EXPECT_EQ(book.queueAhead(4), 0);    // alone at 101
+    EXPECT_EQ(book.queueAhead(5), 0);    // alone at 99
+    EXPECT_EQ(book.queueAhead(7), 1000); // ask side, behind #6
+    EXPECT_TRUE(book.checkInvariants());
+}
+
+TEST(OrderBookQueueAhead, ExecuteCancelThenEvaluate) {
+    OrderBook book{};
+    book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 30});
+    book.add(OrderEvent{0, OrderType::Add, 2, Side::Buy, 100, 20});
+    EXPECT_EQ(book.queueAhead(2), 30);
+
+    // partial execute ahead: #1 stays, value ahead of #2 goes down
+    EXPECT_EQ(book.execute(1, 10), BookStatus::Ok);
+    EXPECT_EQ(book.queueAhead(1), 0);
+    EXPECT_EQ(book.queueAhead(2), 20);
+
+    // full execute ahead: #1 removed
+    EXPECT_EQ(book.execute(1, 20), BookStatus::Ok);
+    EXPECT_EQ(book.queueAhead(1), std::nullopt);
+    EXPECT_EQ(book.queueAhead(2), 0);
+
+    // cancel ahead
+    book.add(OrderEvent{0, OrderType::Add, 3, Side::Buy, 100, 60});
+    EXPECT_EQ(book.queueAhead(3), 20);
+    EXPECT_EQ(book.cancel(2), BookStatus::Ok);
+    EXPECT_EQ(book.queueAhead(3), 0);
+    EXPECT_TRUE(book.checkInvariants());
+}
+
+TEST(OrderBookQueueAhead, Modify) {
+    OrderBook book{};
+    book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 30});
+    book.modify(1,15);
+    EXPECT_EQ(book.queueAhead(1), 0);
+    book.add(OrderEvent{0, OrderType::Add, 2, Side::Buy, 100, 100});
+    book.modify(1,200);
+    EXPECT_EQ(book.queueAhead(1), 100);
+    EXPECT_TRUE(book.checkInvariants());
+}
+
+
+
+
+
+
+
