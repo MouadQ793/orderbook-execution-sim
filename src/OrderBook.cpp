@@ -406,7 +406,14 @@ std::optional<std::int64_t> OrderBook::getTicket(std::int64_t orderId) const {
     return ticket;
 }
 
-
+std::optional<OrderInfo> OrderBook::getOrderInfo(std::int64_t orderId) const {
+    // grabs all orderInfo to help
+    const auto ind{this->m_index.find(orderId)};
+    if (ind == this->m_index.end()) return std::nullopt;
+    const Location& location{ind->second};
+    OrderInfo orderInfo{location.ticket, location.price, location.pt->quantity, location.side};
+    return orderInfo;
+}
 
 
 

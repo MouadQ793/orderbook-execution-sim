@@ -27,6 +27,16 @@ struct TopOfBook {
     std::int64_t totalQty{};
 };
 
+struct OrderInfo {
+    std::int64_t ticket{};
+    std::int64_t price{};
+    std::int64_t quantity{};
+    Side side{};
+};
+
+
+
+
 class OrderBook {
 
 public:
@@ -43,13 +53,15 @@ public:
 
     // function to print state of the book
     void print(std::ostream& out) const;
-    void removeCrossedLevels(Side side, std::int64_t price);
     void printStaleRemoved() const;
     std::int64_t staleRemoved() const { return m_staleRemoved; }
     bool checkInvariants() const;
     std::int64_t depth(Side side, std::int64_t k) const;
     std::optional<std::int64_t> queueAhead(std::int64_t orderId) const ;
     std::optional<std::int64_t> getTicket(std::int64_t orderId) const;
+
+    std::optional<OrderInfo> getOrderInfo(std::int64_t orderId) const;
+
 
 private:
     std::int64_t m_staleRemoved{};
@@ -76,4 +88,5 @@ private:
     std::unordered_map<std::int64_t, Location> m_index;
     using IndexIt = std::unordered_map<std::int64_t, Location>::iterator; // to make the helper function more readable
     void removeOrder(IndexIt ind);
+    void removeCrossedLevels(Side side, std::int64_t price);
 };

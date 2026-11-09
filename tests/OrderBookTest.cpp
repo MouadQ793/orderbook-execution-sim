@@ -512,4 +512,44 @@ TEST(OrderTicketRanking, UnkownId) {
 }
 
 
+TEST(OrderBookOrderInfo, AllFieldsAndUnknownId) {
+    OrderBook book{};
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 1, Side::Buy, 100, 30}), BookStatus::Ok);
+    EXPECT_EQ(book.add(OrderEvent{0, OrderType::Add, 2, Side::Sell, 105, 70}), BookStatus::Ok);
+
+    const auto bid{book.getOrderInfo(1)};
+    const auto ask{book.getOrderInfo(2)};
+    ASSERT_TRUE(bid.has_value());
+    ASSERT_TRUE(ask.has_value());
+
+    EXPECT_EQ(bid->side, Side::Buy);
+    EXPECT_EQ(bid->price, 100);
+    EXPECT_EQ(bid->quantity, 30);
+
+    EXPECT_EQ(ask->side, Side::Sell);
+    EXPECT_EQ(ask->price, 105);
+    EXPECT_EQ(ask->quantity, 70);
+
+    EXPECT_LT(bid->ticket, ask->ticket);
+
+    EXPECT_EQ(book.getOrderInfo(3), std::nullopt);
+    EXPECT_TRUE(book.checkInvariants());
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
