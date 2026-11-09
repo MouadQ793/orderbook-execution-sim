@@ -51,4 +51,17 @@
 
 ## Part 3 
 
-- The indicators will have their own class reading the bookorder by const ref to make sure it doesn't interfer and to keep the book order purely a reflection of the exchange.
+- The indicators have their own class, which reads the order book by const reference, so it can't interfere with it and the book stays a pure reflection of the exchange.
+
+### Spread, mid price
+
+- Spread = best ask − best bid, in ticks. The mid is stored as the double mid (best bid + best ask, in half-ticks) to stay an integer.
+- `midChanged` is true when a mid exists before and after the message and either best price changed. A side appearing or disappearing doesn't count, since no return can be computed.
+- Price 0 means "no price": safe, because `add` rejects any price ≤ 0.
+- Full MSFT day (see `python/part3_indicators.ipynb`): 13 rows with no mid, 3,784 mid changes (0.6% of messages).
+| Spread | Share of messages | Share of time |
+| --- | ---: | ---: |
+| 1 tick | 80.3% | 99.2% |
+| 2 ticks | 19.6% | 0.8% |
+| 3 to 16 ticks | 0.03% | 0.02% |
+- The spread is almost always 1 tick. When it opens to 2 ticks, it closes again almost at once, but those brief states generate a fifth of all messages (liquidity refill, and executions sharing a timestamp). Time-weighted statistics are needed: message counts overstate wide spreads.
