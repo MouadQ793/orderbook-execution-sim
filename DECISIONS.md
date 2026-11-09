@@ -40,10 +40,15 @@
 - Execute: executes the order; if the execution is bigger than the current quantity, it's rejected.
 - Modify: receives the new quantity; if it's bigger than the current one, it moves the order down in the execution order.
 
-## Data Inconsistency 
+### Data Inconsistency 
 - Replaying the full MSFT day, the book becomes crossed at converted line 4,797 (best bid 31.08 >= best ask 31.08), with 0 messages rejected by the book, because the Lobster message file adds some orders and never removes them (around 2 % of the orders)
 - It seems the orders are removed in the lobsterbook snapshot reference but without any messages doing so.
 - Will handle them by making an "uncross rule" canceling orders when they cross.
 - Uncross rule implemented when a new order crosses the opposite side, the opposite levels at crossing prices are removed.
 - Uncross rule on the full MSFT day yields 2,645 stale orders removed and 0 crossings
 - Invariant checker checks for 5 things, no empty lvl, totals equal queue sums, level prices equals key, index matches queues and book not crossed.
+
+
+## Part 3 
+
+- The indicators will have their own class reading the bookorder by const ref to make sure it doesn't interfer and to keep the book order purely a reflection of the exchange.

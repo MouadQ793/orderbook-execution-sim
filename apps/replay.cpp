@@ -32,7 +32,7 @@ int main() {
             // avoids undefind behavior in case a line fails to parse
         }
         orderBook.apply(*event);
-
+        orderBook.print(std::cout);
         if (lineNumber % 10000 == 0 && !orderBook.checkInvariants()) {
             std::cerr << "invariant broken at line " << lineNumber << '\n';
             break;
