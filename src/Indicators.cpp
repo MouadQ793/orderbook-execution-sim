@@ -7,6 +7,8 @@
 #include <sstream>
 #include <iostream>
 #include <cstdint>
+#include <cmath>
+#include "ob/utils.h"
 
 void Indicators::update(const OrderBook& orderBook, const OrderEvent&) {
     // check book to see if there was a change in the prices
@@ -25,6 +27,7 @@ void Indicators::update(const OrderBook& orderBook, const OrderEvent&) {
     bool newMid {(currentBestAsk != m_prevAskPrice) || (currentBestBid != m_prevBidPrice)};
     this->m_midChanged = (newMid && this->m_exists && currentTopAsk && currentTopBid);
 
+
     if (currentTopAsk && currentTopBid)  {
         this->m_spread = currentBestAsk - currentBestBid;
         this->m_doubleMid = currentBestBid + currentBestAsk;
@@ -33,6 +36,15 @@ void Indicators::update(const OrderBook& orderBook, const OrderEvent&) {
         this->m_imbalancek = imbalance(orderBook.depth(Side::Buy,imbalanceDepth), orderBook.depth(Side::Sell,imbalanceDepth));
     }
     else {this->m_exists = false;}
+    if (this->m_midChanged) {
+        // return in ticks: the double mid is in half-ticks
+        const double r{static_cast<double>(this->m_doubleMid - this->m_prevDoubleMid) / 2.0};
+        const double d{r - this->m_mean};
+        this->m_mean = (1.0 - this->m_alpha) * this->m_mean + this->m_alpha * r;
+        this->m_variance = (1.0 - this->m_alpha) * (this->m_variance + this->m_alpha * d * d);
+    }
+    // previous mid = the mid after THIS message, kept for the next one
+    if (this->m_exists) this->m_prevDoubleMid = this->m_doubleMid;
 
 
     // store the current prices as the old ones
@@ -46,7 +58,8 @@ std::string Indicators::toCsvLine(std::int64_t ts) const {
 
     std::stringstream os{};
     if (m_exists) {
-        os << ts << ',' << this->m_spread << ',' << this->m_doubleMid << ',' << this->m_midChanged << ',' << this->m_imbalance1 << ',' << this->m_imbalancek;
+        os << ts << ',' << this->m_spread << ',' << this->m_doubleMid << ',' << this->m_midChanged << ',' << this->m_imbalance1 << ',' << this->m_imbalancek << ',' <<
+            this->m_mean << ',' << std::sqrt(this->m_variance) << '\n';
     } else {
         os << ts << ",,," << this->m_midChanged << ",,";
     }

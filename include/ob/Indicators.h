@@ -15,12 +15,16 @@ public :
     bool getexists () const {return m_exists;}
     void update(const OrderBook& book, const OrderEvent&);
     std::string toCsvLine(std::int64_t ts) const;
-    static constexpr std::string_view csvHeader{"timestamp,spread,double_mid,mid_changed,imbalance_1,imbalance_k"};
+    static constexpr std::string_view csvHeader{"timestamp,spread,double_mid,mid_changed,imbalance_1,imbalance_k,ret_mean,ret_vol"};
 
 
 private :
     std::int64_t m_prevBidPrice{0};
     std::int64_t m_prevAskPrice{0};
+    double m_variance{0};
+    double m_mean{0};
+    static constexpr double m_alpha{0.05};
+    std::int64_t m_prevDoubleMid{0};
     bool m_exists{};
 
     double m_imbalance1{};
@@ -30,7 +34,6 @@ private :
     std::int64_t m_doubleMid{};
     bool m_midChanged{};
     static double imbalance(std::int64_t bidQty, std::int64_t askQty);
-
 
 };
 
