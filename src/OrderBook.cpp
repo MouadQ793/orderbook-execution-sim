@@ -328,3 +328,31 @@ bool OrderBook::checkInvariants() const {
 
     return true;
 }
+
+
+std::int64_t OrderBook::depth(Side side, std::int64_t k) const {
+    // Computes depth of order book, goes through the levels summing their quantities until k levels have been considered
+    std::int64_t Qty{0};
+    int j{0};
+    if (k <= 0) {std::cerr << "negative or null depth requested "; return 0;}
+    switch (side) {
+        case Side::Buy:
+            for (const auto& [price, level]:m_bidSide) {
+                Qty += level.totalQty;
+                j++;
+                if (j == k) break;
+            }
+            return Qty;
+        case Side::Sell:
+            for (const auto& [price, level]:m_askSide) {
+                Qty += level.totalQty;
+                j++;
+                if (j == k) break;
+            }
+            return Qty;
+        case Side::None:
+        default:
+            assert(false && " Error in computing imbalance");
+            return 0;
+    }
+}

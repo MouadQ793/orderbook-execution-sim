@@ -65,3 +65,5 @@
 | 2 ticks | 19.6% | 0.8% |
 | 3 to 16 ticks | 0.03% | 0.02% |
 - The spread is almost always 1 tick. When it opens to 2 ticks, it closes again almost at once, but those brief states generate a fifth of all messages (liquidity refill, and executions sharing a timestamp). Time-weighted statistics are needed: message counts overstate wide spreads.
+
+- Added Depth public function in orderbook and imbalance computing in indicators, $I_1$ = the level 1 imbalance, and $I_{k=5}$ = the best 5 non empty levels. 

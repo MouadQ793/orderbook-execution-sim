@@ -48,7 +48,7 @@ public:
     std::int64_t staleRemoved() const { return m_staleRemoved; }
 
     bool checkInvariants() const;
-
+    std::int64_t depth(Side side, std::int64_t k) const;
 
 private:
     std::int64_t m_staleRemoved{};

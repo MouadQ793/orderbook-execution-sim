@@ -5,6 +5,7 @@
 
 #include "ob/Indicators.h"
 #include <sstream>
+#include <iostream>
 #include <cstdint>
 
 void Indicators::update(const OrderBook& orderBook, const OrderEvent&) {
@@ -28,6 +29,8 @@ void Indicators::update(const OrderBook& orderBook, const OrderEvent&) {
         this->m_spread = currentBestAsk - currentBestBid;
         this->m_doubleMid = currentBestBid + currentBestAsk;
         this->m_exists = true;
+        this->m_imblance1 = imbalance(currentTopBid->totalQty, currentTopAsk->totalQty);
+        this->m_imblancek = imbalance(orderBook.depth(Side::Buy,imbalanceDepth), orderBook.depth(Side::Sell,imbalanceDepth));
     }
     else {this->m_exists = false;}
 
@@ -43,9 +46,18 @@ std::string Indicators::toCsvLine(std::int64_t ts) const {
 
     std::stringstream os{};
     if (m_exists) {
-        os << ts << ',' << this->m_spread << ',' << this->m_doubleMid << ',' << this->m_midChanged;
+        os << ts << ',' << this->m_spread << ',' << this->m_doubleMid << ',' << this->m_midChanged << ',' << this->m_imblance1 << ',' << this->m_imblancek;
     } else {
-        os << ts << ",,," << this->m_midChanged;
+        os << ts << ",,," << this->m_midChanged << ",,";
     }
     return os.str();
 }
+
+double Indicators::imbalance(std::int64_t bidQty, std::int64_t askQty) {
+    if (bidQty + askQty == 0) {std::cerr << "imbalance: zero total quantity\n"; return 0.0;}
+    double denom {static_cast<double>(bidQty + askQty)};
+    double num {static_cast<double>(bidQty - askQty)};
+    return num/denom;
+}
+
+
