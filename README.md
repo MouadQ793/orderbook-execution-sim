@@ -110,5 +110,6 @@ This project is also how I am learning C++, and I used Claude (Anthropic) as a t
 - **Project design:** the project plan and a step-by-step learning guide (concepts, tasks and hints for each question) were prepared with Claude.
 - **Workflow:** for each task, Claude points me to the relevant sections of learncpp.com and cppreference.com. After reading them, I design and write my own solution, then send it to Claude for review; it points out potential bugs, which I then fix myself.
 - **Code:** the large majority of the C++ code (parsing, LOBSTER conversion, the order book, the invariant checker and the replay) was written by me. Claude provided a few pieces: mainly the `parseInt` helper based on `std::from_chars`, a first example test for `fitOrderEvent` used as a template for the others, part of `print` formatting of the book, part of the order book unit tests ( modify, apply and the uncross rule), the `CMakeLists.txt` configuration and this README.
+  - The tests started getting too redundant so started 
 
 Every design choice and its reason is recorded in [DECISIONS.md](DECISIONS.md).

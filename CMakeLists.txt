@@ -36,7 +36,8 @@ target_link_libraries(replay PRIVATE projet_lib)
 enable_testing()
 add_executable(tests tests/ParsingTest.cpp
         tests/OrderBookTest.cpp
-        tests/QueueTrackerTest.cpp)
+        tests/QueueTrackerTest.cpp
+        tests/IndicatorsTest.cpp)
 target_link_libraries(tests PRIVATE projet_lib GTest::gtest_main)
 include(GoogleTest)
 gtest_discover_tests(tests)

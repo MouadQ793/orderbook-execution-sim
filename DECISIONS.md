@@ -76,3 +76,17 @@
 - `QueueTracker` follows a few tracked orders incrementally and reads the book by const reference. It is needed because the strategy's simulated orders (Part 4) will never be in the book.
 - The tracker updates before `apply` for other orders (their old quantity is lost after) and after `apply` for the tracked order itself and for orders removed by the uncross rule.
 - Stress test against `queueAhead`: 6.16M comparisons, 0 mismatches.
+
+### EWMA mid returns
+ 
+- Added mean and variance of mid returns in indicators, updated only when the mid changes, otherwise every message would add a zero return and the variance would shrink.
+- The return is in ticks (double mid difference / 2), same unit as the spread.
+- The variance uses the exact recursion: the deviation is computed with the old mean, before the mean is updated.
+- $\alpha = 0.05$ per mid change, so it remembers about the last 20 changes. Mean and variance start at 0, the first ~20 changes are a warm-up.
+- This naive EWMA is the baseline to compare later with the uncertainty zones estimator (Robert & Rosenbaum).
+- Added regimes indicators also EWMA type, 
+  - Spread mean : $spreadMean_{t} = e^{-\Delta_t / \tau}  *spreadMean_{t-1} + (1 - e^{-\Delta t / \tau} * spread_{t-1} )$
+  - Depth mean : $depthMean_{t} = e^{-\Delta_t / \tau}  *depthMean_{t-1} + (1 - e^{-\Delta t / \tau}) * depth_{t-1}$
+  - Message intensity : $\lambda = e^{-\Delta_t / \tau}  * \lambda_{t-1} + 10^9 / \tau$ (tau is in nano seconds)
+  - Spread and depth use the value in state during $\Delta t$ a state only counts as long as it lasts not by number of occurences.
+- Removed the last '\n' in toCsvLine of indicators because it was redundant with the one in replay

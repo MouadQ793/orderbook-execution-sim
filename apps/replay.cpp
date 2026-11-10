@@ -59,7 +59,7 @@ int main() {
         orderTracker.updateAfterApply(*event, orderBook);
         // orderBook.print(std::cout);
         indicators.update(orderBook, *event);
-        indicatorsOutput << indicators.toCsvLine(event->timestamp) << '\n';
+        indicatorsOutput << indicators.toCsvLine(event->timestamp);
 
         // start tracking one add in trackEvery (after apply, so the order is in the book)
         if (event->type == OrderType::Add) {

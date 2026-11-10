@@ -10,7 +10,7 @@
 #include <cmath>
 #include "ob/utils.h"
 
-void Indicators::update(const OrderBook& orderBook, const OrderEvent&) {
+void Indicators::update(const OrderBook& orderBook, const OrderEvent& event) {
     // check book to see if there was a change in the prices
     // if there was check there is both a bid and ask to compute this->
     // update previous ones
@@ -26,9 +26,19 @@ void Indicators::update(const OrderBook& orderBook, const OrderEvent&) {
     // compare if mid changed or not, if previous one exists and if Bid Ask/top still exist
     bool newMid {(currentBestAsk != m_prevAskPrice) || (currentBestBid != m_prevBidPrice)};
     this->m_midChanged = (newMid && this->m_exists && currentTopAsk && currentTopBid);
+    const double a {compute_a(event.timestamp - m_prevTimestamp)}; // moved because used for message intensity too
 
+    if (m_exists) {
+        // if a spread existed last time time compute spread mean
+        this->m_spreadMean = (1 - a) * this->m_spreadMean + a * static_cast<double>(this->m_spread);
+        this->m_depthMean = (1 - a ) * this->m_depthMean + a * static_cast<double>(this->m_depth);
+    }
+    //intensity of messages
+    this->m_lambda = (1 - a ) * this->m_lambda + 1e9/ tau;
 
+    this->m_prevTimestamp = event.timestamp;
     if (currentTopAsk && currentTopBid)  {
+        this->m_depth = currentTopBid->totalQty + currentTopAsk->totalQty ;
         this->m_spread = currentBestAsk - currentBestBid;
         this->m_doubleMid = currentBestBid + currentBestAsk;
         this->m_exists = true;
@@ -59,9 +69,9 @@ std::string Indicators::toCsvLine(std::int64_t ts) const {
     std::stringstream os{};
     if (m_exists) {
         os << ts << ',' << this->m_spread << ',' << this->m_doubleMid << ',' << this->m_midChanged << ',' << this->m_imbalance1 << ',' << this->m_imbalancek << ',' <<
-            this->m_mean << ',' << std::sqrt(this->m_variance) << '\n';
+            this->m_mean << ',' << std::sqrt(this->m_variance) << ',' << this->m_spreadMean << ',' << this->m_depthMean << ','  << this->m_lambda << '\n';
     } else {
-        os << ts << ",,," << this->m_midChanged << ",,";
+        os << ts << ",,," << this->m_midChanged << ",,,,,,," <<  this->m_lambda << '\n';
     }
     return os.str();
 }
@@ -72,5 +82,11 @@ double Indicators::imbalance(std::int64_t bidQty, std::int64_t askQty) {
     double num {static_cast<double>(bidQty - askQty)};
     return num/denom;
 }
+
+double Indicators::compute_a(std::int64_t deltaTime) {
+    double a {static_cast<double>(deltaTime) / tau};
+    return 1 - std::exp(-a);
+}
+
 
 

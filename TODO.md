@@ -13,3 +13,5 @@ these are changes and optimizations I aim to do after finishing the project.
 ## Part 3 Indicators and tracker 
 - Change the structure of tracker to do tracking grouped per level
 - in QueueTRacker : the tracker assumes all the events will be accepted by the book which might not be the case (it is with the msft but might not be with something else so : handle error cases same way as new book)
+- EWMA: time-aware α, and uncertainty zones estimator (η̂, X̂) to compare with the naive vol.
+- Add a time based vol.
