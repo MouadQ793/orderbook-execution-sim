@@ -19,9 +19,11 @@ void Indicators::update(const OrderBook& orderBook, const OrderEvent& event) {
     const std::optional<TopOfBook>  currentTopBid{orderBook.bestBid()};
     std::int64_t currentBestAsk{};
     std::int64_t currentBestBid{};
+    std::int64_t currentBestAskQty{};
+    std::int64_t currentBestBidQty{};
 
-    if (currentTopAsk) currentBestAsk = currentTopAsk->price;
-    if (currentTopBid) currentBestBid = currentTopBid->price;
+    if (currentTopAsk) {currentBestAsk = currentTopAsk->price; currentBestAskQty = currentTopAsk->totalQty;}
+    if (currentTopBid) {currentBestBid = currentTopBid->price; currentBestBidQty = currentTopBid->totalQty;}
 
     // compare if mid changed or not, if previous one exists and if Bid Ask/top still exist
     bool newMid {(currentBestAsk != m_prevAskPrice) || (currentBestBid != m_prevBidPrice)};
@@ -33,11 +35,21 @@ void Indicators::update(const OrderBook& orderBook, const OrderEvent& event) {
         this->m_spreadMean = (1 - a) * this->m_spreadMean + a * static_cast<double>(this->m_spread);
         this->m_depthMean = (1 - a ) * this->m_depthMean + a * static_cast<double>(this->m_depth);
     }
+
     //intensity of messages
     this->m_lambda = (1 - a ) * this->m_lambda + 1e9/ tau;
 
+
     this->m_prevTimestamp = event.timestamp;
+    this->m_ofi = 0; // resetting the imbalance so it doesn't get computed twice if it doesn't change
     if (currentTopAsk && currentTopBid)  {
+        // order flow imbalace
+        if (m_exists) {
+            this->m_ofi = (this->m_prevBidPrice <= currentBestBid) * currentBestBidQty - (
+                  this->m_prevBidPrice >= currentBestBid) * this->m_prevBestBidQty;
+            this->m_ofi += (this->m_prevAskPrice <= currentBestAsk) * this->m_prevBestAskQty - (
+                (this->m_prevAskPrice >= currentBestAsk) * currentBestAskQty);
+        }
         this->m_depth = currentTopBid->totalQty + currentTopAsk->totalQty ;
         this->m_spread = currentBestAsk - currentBestBid;
         this->m_doubleMid = currentBestBid + currentBestAsk;
@@ -60,6 +72,8 @@ void Indicators::update(const OrderBook& orderBook, const OrderEvent& event) {
     // store the current prices as the old ones
     this->m_prevAskPrice = currentBestAsk;
     this->m_prevBidPrice = currentBestBid;
+    this->m_prevBestAskQty = currentBestAskQty;
+    this->m_prevBestBidQty = currentBestBidQty;
 
 }
 
@@ -69,9 +83,9 @@ std::string Indicators::toCsvLine(std::int64_t ts) const {
     std::stringstream os{};
     if (m_exists) {
         os << ts << ',' << this->m_spread << ',' << this->m_doubleMid << ',' << this->m_midChanged << ',' << this->m_imbalance1 << ',' << this->m_imbalancek << ',' <<
-            this->m_mean << ',' << std::sqrt(this->m_variance) << ',' << this->m_spreadMean << ',' << this->m_depthMean << ','  << this->m_lambda << '\n';
+            this->m_mean << ',' << std::sqrt(this->m_variance) << ',' << this->m_spreadMean << ',' << this->m_depthMean << ','  << this->m_lambda << ',' << this->m_ofi <<'\n';
     } else {
-        os << ts << ",,," << this->m_midChanged << ",,,,,,," <<  this->m_lambda << '\n';
+        os << ts << ",,," << this->m_midChanged << ",,,,,,," <<  this->m_lambda << "," << this->m_ofi << '\n';
     }
     return os.str();
 }

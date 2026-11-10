@@ -182,3 +182,83 @@ TEST(Indicators, IntensitySettlesAtMessageRate) {
     }
     EXPECT_NEAR(r.indicators.getIntensity(), 100.5, 0.1);
 }
+
+// ---------- order flow imbalance (Cont, Kukanov & Stoikov 2014), level 1 ----------
+// e = 1{Pb >= Pb_prev} qb - 1{Pb <= Pb_prev} qb_prev - 1{Pa <= Pa_prev} qa + 1{Pa >= Pa_prev} qa_prev
+
+namespace {
+    // bid 100 x 50, ask 101 x 40 (and a second ask level 102 x 30)
+    void startBook(Replay& r) {
+        r.add(0, 1, Side::Buy, 100, 50);
+        r.add(0, 2, Side::Sell, 101, 40);
+        r.add(0, 3, Side::Sell, 102, 30);
+    }
+}
+
+TEST(IndicatorsOfi, ZeroWithoutBothSides) {
+    Replay r{};
+    r.add(0, 1, Side::Buy, 100, 50);                 // no ask: no OFI
+    EXPECT_EQ(r.indicators.getOfi(), 0);
+    r.add(0, 2, Side::Sell, 101, 40);                // both sides now, but not before: no OFI
+    EXPECT_EQ(r.indicators.getOfi(), 0);
+}
+
+TEST(IndicatorsOfi, BidQuantityAddedAtSamePrice) {
+    Replay r{};
+    startBook(r);
+    // bid price unchanged: 50 -> 70, so e = 70 - 50 = +20 (ask unchanged: 40 - 40 = 0)
+    r.add(0, 4, Side::Buy, 100, 20);
+    EXPECT_EQ(r.indicators.getOfi(), 20);
+}
+
+TEST(IndicatorsOfi, AskQuantityAddedAtSamePrice) {
+    Replay r{};
+    startBook(r);
+    // ask price unchanged: 40 -> 50, so e = -(50) + 40 = -10 (selling pressure)
+    r.add(0, 4, Side::Sell, 101, 10);
+    EXPECT_EQ(r.indicators.getOfi(), -10);
+}
+
+TEST(IndicatorsOfi, BestAskEatenPriceGoesUp) {
+    Replay r{};
+    startBook(r);
+    // ask 101 x 40 fully executed, best ask becomes 102 x 30
+    // ask price went up: only + qa_prev counts, e = +40 (buying pressure)
+    r.step(OrderEvent{0, OrderType::Execute, 2, Side::None, 0, 40});
+    EXPECT_EQ(r.indicators.getOfi(), 40);
+}
+
+TEST(IndicatorsOfi, BestBidLevelEmptiedPriceGoesDown) {
+    Replay r{};
+    startBook(r);
+    r.add(0, 4, Side::Buy, 99, 70);
+    // bid 100 x 50 cancelled, best bid becomes 99 x 70
+    // bid price went down: only - qb_prev counts, e = -50
+    r.cancel(0, 1);
+    EXPECT_EQ(r.indicators.getOfi(), -50);
+}
+
+TEST(IndicatorsOfi, NewBetterBidCountsWholeLevel) {
+    Replay r{};
+    startBook(r);
+    // ask 101 cancelled first so a bid at 101 does not cross: best ask becomes 102 x 30 (e = +40)
+    r.cancel(0, 2);
+    // new best bid 101 x 25: bid price went up, only + qb counts, e = +25
+    r.add(0, 4, Side::Buy, 101, 25);
+    EXPECT_EQ(r.indicators.getOfi(), 25);
+}
+
+TEST(IndicatorsOfi, DeepMessageAndResetGiveZero) {
+    Replay r{};
+    startBook(r);
+    r.add(0, 4, Side::Buy, 100, 20);                 // +20
+    EXPECT_EQ(r.indicators.getOfi(), 20);
+    r.add(0, 5, Side::Buy, 95, 500);                 // deeper level: top unchanged, e = 0
+    EXPECT_EQ(r.indicators.getOfi(), 0);
+    // empty the bid side: cancel 100 x 50, 100 x 20, then 95 x 500
+    r.cancel(0, 1);
+    r.cancel(0, 4);
+    EXPECT_EQ(r.indicators.getOfi(), -20);           // best bid 100 -> 95: e = -(20)
+    r.cancel(0, 5);                                  // no bid left: e = 0, not the previous -20
+    EXPECT_EQ(r.indicators.getOfi(), 0);
+}

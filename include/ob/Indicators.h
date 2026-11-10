@@ -15,7 +15,7 @@ public :
     bool getexists () const {return m_exists;}
     void update(const OrderBook& book, const OrderEvent&);
     std::string toCsvLine(std::int64_t ts) const;
-    static constexpr std::string_view csvHeader{"timestamp,spread,double_mid,mid_changed,imbalance_1,imbalance_k,ret_mean,ret_vol,spread_mean,depth_mean,intensity"};
+    static constexpr std::string_view csvHeader{"timestamp,spread,double_mid,mid_changed,imbalance_1,imbalance_k,ret_mean,ret_vol,spread_mean,depth_mean,intensity,ofi"};
     double getImbalance1() const {return m_imbalance1;}
     double getImbalanceK() const {return m_imbalancek;}
     double getRetMean() const {return m_mean;}
@@ -23,6 +23,7 @@ public :
     double getSpreadMean() const {return m_spreadMean;}
     double getDepthMean() const {return m_depthMean;}
     double getIntensity() const {return m_lambda;}
+    std::int64_t getOfi() const {return m_ofi;}
 
 private :
     //stats
@@ -38,6 +39,9 @@ private :
     std::int64_t m_depth{};
     double m_depthMean{};
     double m_lambda {};
+    std::int64_t m_ofi{};
+    std::int64_t m_prevBestAskQty{0};
+    std::int64_t m_prevBestBidQty{0};
 
 
     bool m_exists{};
