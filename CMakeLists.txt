@@ -40,7 +40,8 @@ add_executable(tests tests/ParsingTest.cpp
         tests/OrderBookTest.cpp
         tests/QueueTrackerTest.cpp
         tests/IndicatorsTest.cpp
-        tests/ScheduledEventsTest.cpp)
+        tests/ScheduledEventsTest.cpp
+        tests/EngineTest.cpp)
 target_link_libraries(tests PRIVATE projet_lib GTest::gtest_main)
 include(GoogleTest)
 gtest_discover_tests(tests)

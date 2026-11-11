@@ -3,16 +3,18 @@
 //
 
 #pragma once
-#include <cstdint>
+#include <functional>
 #include <queue>
+#include <string>
 #include <tuple>
 #include <vector>
-
+#include <fstream>
 #include "message.h"
+#include "OrderBook.h"
 
 
 enum class Priority {
-    // This is so Market orders go through before execution ones
+    // This is so Market orders go through before execution ones on equal ts.
     Market,
     Strategy
 };
@@ -58,3 +60,38 @@ inline bool operator==(const ScheduledEvent &a, const ScheduledEvent &b) {
 inline bool operator>(const ScheduledEvent& a, const ScheduledEvent& b) { return b < a; }
 
 using EventQueue = std::priority_queue<ScheduledEvent, std::vector<ScheduledEvent>, std::greater<ScheduledEvent>>;
+
+
+
+class Engine {
+public:
+    explicit Engine(const std::string& path);
+    bool schedule(std::int64_t timestamp,const OrderEvent& orderEvent);
+    std::int64_t getCurrentTime() const{return m_currentTime;}
+    const OrderBook& getOrderBook() const{return m_orderBook;}
+    void run();
+
+private:
+    EventQueue m_eventQueue{};
+    OrderBook m_orderBook{};
+    std::int64_t m_nextTicket{};
+    std::int64_t m_currentTime{};
+    std::vector<std::function<void(const OrderBook&, const OrderEvent&)>> m_subscribers{}; // Vector of subscribers (functions to call)
+    std::ifstream m_input{};
+    bool pushNextMarketEvent();
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
