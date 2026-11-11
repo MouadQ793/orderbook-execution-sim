@@ -47,51 +47,47 @@ struct ScheduledEvent {
 // This was my first suggestion, but claude informed me there is a way more optimal way to do it that takes one line which I took
 
 
-
-
 inline bool operator<(const ScheduledEvent &a, const ScheduledEvent &b) {
     return std::tie(a.timestamp, a.priority, a.ticket) < std::tie(b.timestamp, b.priority, b.ticket);
 }
+
 inline bool operator==(const ScheduledEvent &a, const ScheduledEvent &b) {
     return std::tie(a.timestamp, a.priority, a.ticket) == std::tie(b.timestamp, b.priority, b.ticket);
 }
 
 
-inline bool operator>(const ScheduledEvent& a, const ScheduledEvent& b) { return b < a; }
+inline bool operator>(const ScheduledEvent &a, const ScheduledEvent &b) { return b < a; }
 
-using EventQueue = std::priority_queue<ScheduledEvent, std::vector<ScheduledEvent>, std::greater<ScheduledEvent>>;
-
+using EventQueue = std::priority_queue<ScheduledEvent, std::vector<ScheduledEvent>, std::greater<ScheduledEvent> >;
+using BookCallBack = std::function<void(const OrderBook &, const OrderEvent &)>;
 
 
 class Engine {
 public:
-    explicit Engine(const std::string& path);
-    bool schedule(std::int64_t timestamp,const OrderEvent& orderEvent);
-    std::int64_t getCurrentTime() const{return m_currentTime;}
-    const OrderBook& getOrderBook() const{return m_orderBook;}
+    explicit Engine(const std::string &path, std::int64_t latencyNs = 0);
+
+    bool schedule(std::int64_t timestamp, const OrderEvent &orderEvent);
+
+    std::int64_t getCurrentTime() const { return m_currentTime; }
+    const OrderBook &getOrderBook() const { return m_orderBook; }
+
     void run();
+
+    void subscribe(const BookCallBack &callBack);
+
+    void onStrategyEvent(const BookCallBack &callback);
+
+    bool send(const OrderEvent &order);
 
 private:
     EventQueue m_eventQueue{};
     OrderBook m_orderBook{};
     std::int64_t m_nextTicket{};
     std::int64_t m_currentTime{};
-    std::vector<std::function<void(const OrderBook&, const OrderEvent&)>> m_subscribers{}; // Vector of subscribers (functions to call)
+    std::vector<BookCallBack> m_subscribers{}; // Vector of subscribers (functions to call)
+    std::vector<BookCallBack> m_strategyHandlers{};
     std::ifstream m_input{};
+    std::int64_t m_latency{17};
+
     bool pushNextMarketEvent();
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
