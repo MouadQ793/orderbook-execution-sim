@@ -23,7 +23,9 @@ add_library(projet_lib
         src/parsing.cpp
         src/OrderBook.cpp
         src/Indicators.cpp
-        src/QueueTracker.cpp)
+        src/QueueTracker.cpp
+        src/Engine.cpp
+        include/ob/Engine.h)
 target_include_directories(projet_lib PUBLIC include)
 
 
@@ -37,7 +39,8 @@ enable_testing()
 add_executable(tests tests/ParsingTest.cpp
         tests/OrderBookTest.cpp
         tests/QueueTrackerTest.cpp
-        tests/IndicatorsTest.cpp)
+        tests/IndicatorsTest.cpp
+        tests/ScheduledEventsTest.cpp)
 target_link_libraries(tests PRIVATE projet_lib GTest::gtest_main)
 include(GoogleTest)
 gtest_discover_tests(tests)
