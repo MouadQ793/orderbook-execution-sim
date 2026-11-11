@@ -58,7 +58,7 @@
 - Spread = best ask − best bid, in ticks. The mid is stored as the double mid (best bid + best ask, in half-ticks) to stay an integer.
 - `midChanged` is true when a mid exists before and after the message and either best price changed. A side appearing or disappearing doesn't count, since no return can be computed.
 - Price 0 means "no price": safe, because `add` rejects any price ≤ 0.
-- Full MSFT day (see `python/part3_indicators.ipynb`): 13 rows with no mid, 3,784 mid changes (0.6% of messages).
+- Full MSFT day : 13 rows with no mid, 3,784 mid changes (0.6% of messages).
 | Spread | Share of messages | Share of time |
 | --- | ---: | ---: |
 | 1 tick | 80.3% | 99.2% |
@@ -75,7 +75,7 @@
 - `getOrderInfo` returns side, price, quantity and ticket in one lookup.
 - `QueueTracker` follows a few tracked orders incrementally and reads the book by const reference. It is needed because the strategy's simulated orders (Part 4) will never be in the book.
 - The tracker updates before `apply` for other orders (their old quantity is lost after) and after `apply` for the tracked order itself and for orders removed by the uncross rule.
-- Stress test against `queueAhead`: 6.16M comparisons, 0 mismatches.
+- Full-day check in `replay` (1 add in 1,000 tracked) against `queueAhead`: 329 orders, 990,817 comparisons, 0 mismatches.
 
 ### EWMA mid returns
  
